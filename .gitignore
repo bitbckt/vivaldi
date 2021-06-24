@@ -1,0 +1,14 @@
+.dub
+docs.json
+__dummy.html
+docs/
+libvivaldi.so
+libvivaldi.dylib
+libvivaldi.dll
+libvivaldi.a
+libvivaldi.lib
+vivaldi-test-*
+*.exe
+*.o
+*.obj
+*.lst

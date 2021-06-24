@@ -1,0 +1,10 @@
+{
+    "name": "vivaldi",
+    "description": "A Vivaldi-based decentralized coordinate network system.",
+    "authors": [
+        "Brandon Mitchell"
+    ],
+    "license": "MIT",
+    "copyright": "Copyright © 2021, Brandon Mitchell",
+    "targetType": "library"
+}
