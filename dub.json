@@ -6,5 +6,6 @@
     ],
     "license": "MIT",
     "copyright": "Copyright © 2021, Brandon Mitchell",
-    "targetType": "library"
+    "targetType": "library",
+    "dflags": [ "-preview=dip1000" ]
 }

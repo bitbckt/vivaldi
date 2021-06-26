@@ -12,3 +12,4 @@ vivaldi-test-*
 *.o
 *.obj
 *.lst
+profilegc.log
