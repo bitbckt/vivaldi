@@ -1,13 +1,15 @@
 .dub
+dub.selections.json
 docs.json
 __dummy.html
+bin/
 docs/
 libvivaldi.so
 libvivaldi.dylib
 libvivaldi.dll
 libvivaldi.a
 libvivaldi.lib
-vivaldi-test-*
+vivaldi*
 *.exe
 *.o
 *.obj

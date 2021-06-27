@@ -7,5 +7,17 @@
     "license": "MIT",
     "copyright": "Copyright © 2021, Brandon Mitchell",
     "targetType": "library",
-    "dflags": [ "-preview=dip1000" ]
+    "dflags": [ "-preview=dip1000" ],
+
+    "configurations": [
+        {
+            "name": "unittest",
+            "targetType": "executable",
+            "preBuildCommands": ["$DUB run --compiler=$$DC unit-threaded -c gen_ut_main -- -f bin/ut.d -d $DUB"],
+            "mainSourceFile": "bin/ut.d",
+            "dependencies": {
+                "unit-threaded": "*"
+            }
+        }
+    ]
 }
