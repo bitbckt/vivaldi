@@ -17,6 +17,11 @@ private static enum ZeroThreshold = 1.0e-6;
 private static enum SecondsToNanos = 1.0e9;
 
 /**
+ * A pre-allocated point at the origin of the coordinate system.
+ */
+static immutable Origin = Coordinate(Default);
+
+/**
  * Coordinate represents a point in a Vivaldi network coordinate
  * system.
  *
@@ -73,9 +78,9 @@ struct Coordinate {
     void update(const Config* cfg, const Coordinate* other, const Duration rtt)
          nothrow @safe @nogc {
 
-        import std.math : abs;
+        import std.math : abs, pow;
 
-        const double dist = distanceTo(other).total!"nsecs";
+        double dist = distanceTo(other).total!"nsecs";
         double nanos = rtt.total!"nsecs";
 
         if (nanos < ZeroThreshold) {
@@ -95,8 +100,8 @@ struct Coordinate {
 
         error = cfg.ce * weight * err + error * (1.0 - cfg.ce * weight);
 
-        // NB. force is in seconds; divide by 1000 nsecs/second.
-        const double force = (cfg.cc * weight) * (nanos - dist) / 1000;
+        // NB. force is in seconds
+        double force = (cfg.cc * weight) * (nanos - dist) / SecondsToNanos;
 
         debug(vivaldi) {
             tracef("applying force %f from %s to %s due to RTT %s",
@@ -106,7 +111,20 @@ struct Coordinate {
                    rtt);
         }
 
+        // Apply the force exerted by the other node.
         applyForce(cfg, other, force);
+
+        dist = cast(double)Origin.distanceTo(&this).total!"seconds";
+        force = -1.0 * pow(dist / cfg.rho, 2.0);
+
+        debug(vivaldi) {
+            tracef("applying force %f to %s due to gravity",
+                   force,
+                   this);
+        }
+
+        // Apply the force of gravity exerted by the origin.
+        applyForce(cfg, &Origin, force);
     }
 
     @("update")
