@@ -19,7 +19,7 @@ private static enum SecondsToNanos = 1.0e9;
 /**
  * A pre-allocated point at the origin of the coordinate system.
  */
-static immutable Origin = Coordinate(Default);
+static immutable Origin = Coordinate(defaultConfig);
 
 /**
  * Coordinate represents a point in a Vivaldi network coordinate
