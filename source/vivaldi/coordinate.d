@@ -114,7 +114,7 @@ struct Coordinate {
         // Apply the force exerted by the other node.
         applyForce(cfg, other, force);
 
-        dist = cast(double)Origin.distanceTo(&this).total!"seconds";
+        dist = Origin.distanceTo(&this).total!"seconds";
         force = -1.0 * pow(dist / cfg.rho, 2.0);
 
         debug(vivaldi) {
