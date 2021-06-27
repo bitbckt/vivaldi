@@ -4,6 +4,10 @@ import vivaldi.config;
 
 import core.time;
 
+debug(vivaldi) {
+    import std.experimental.logger : tracef;
+}
+
 // TODO: adjust to 8 dimensions per "Network Coordinates in the Wild"
 private static enum Dimensionality = 3;
 
@@ -90,6 +94,15 @@ struct Coordinate {
 
         // NB. force is in seconds; divide by 1000 nsecs/second.
         const double force = (cfg.cc * weight) * (nanos - dist) / 1000;
+
+        debug(vivaldi) {
+            tracef("applying force %f from %s to %s due to RTT %s",
+                   force,
+                   *other,
+                   this,
+                   rtt);
+        }
+
         applyForce(cfg, other, force);
     }
 
