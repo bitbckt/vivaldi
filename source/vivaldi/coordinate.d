@@ -8,8 +8,9 @@ debug(vivaldi) {
     import std.experimental.logger : tracef;
 }
 
-// TODO: adjust to 8 dimensions per "Network Coordinates in the Wild"
-private static enum Dimensionality = 3;
+// Following "Network Coordinates in the Wild" by Ledlie, et al., use
+// 4 dimensions plus "height".
+private static enum Dimensionality = 4;
 
 private static enum ZeroThreshold = 1.0e-6;
 
@@ -44,11 +45,12 @@ struct Coordinate {
         height = config.minHeight;
     }
 
+    @("defaults")
     unittest {
         Config cfg;
         auto coord = Coordinate(cfg);
 
-        assert(coord.vector == [ 0.0, 0.0, 0.0 ]);
+        assert(coord.vector == [ 0.0, 0.0, 0.0, 0.0 ]);
         assert(magnitude(coord.vector) == 0.0);
         assert(coord.error == cfg.maxError);
         assert(coord.height == cfg.minHeight);
@@ -56,6 +58,7 @@ struct Coordinate {
 
     @disable this();
 
+    @("void initialization")
     unittest {
         import std.conv : emplace;
 
@@ -106,11 +109,12 @@ struct Coordinate {
         applyForce(cfg, other, force);
     }
 
+    @("update")
     unittest {
         Config cfg;
         Coordinate c = Coordinate(cfg);
 
-        assert(c.vector == [ 0.0, 0.0, 0.0 ]);
+        assert(c.vector == [ 0.0, 0.0, 0.0, 0.0 ]);
 
         // Place another node above and nearby; update with a high RTT.
         Coordinate other = Coordinate(cfg);
@@ -123,6 +127,7 @@ struct Coordinate {
         assert(c.vector[0] == 0.0);
         assert(c.vector[1] == 0.0);
         assert(c.vector[2] < 0.0);
+        assert(c.vector[3] == 0.0);
     }
 
     /**
@@ -137,15 +142,16 @@ struct Coordinate {
         return nsecs(cast(long)(dist * SecondsToNanos));
     }
 
+    @("distanceTo")
     unittest {
         Config cfg;
         cfg.minHeight = 0;
 
         auto c1 = Coordinate(cfg);
-        c1.vector = [ -0.5, 1.3, 2.4 ];
+        c1.vector = [ -0.5, 1.3, 2.4, 0.0 ];
 
         auto c2 = Coordinate(cfg);
-        c2.vector = [ 1.2, -2.3, 3.4 ];
+        c2.vector = [ 1.2, -2.3, 3.4, 0.0 ];
 
         assert(c1.distanceTo(&c1).total!"msecs" == 0);
         assert(c1.distanceTo(&c2).total!"msecs" == c2.distanceTo(&c1).total!"msecs");
@@ -209,6 +215,7 @@ private:
         }
     }
 
+    @("applyForce")
     unittest {
         version (DigitalMars) {
             import std.math : isClose;
@@ -223,16 +230,16 @@ private:
         auto origin = Coordinate(cfg);
 
         auto above = Coordinate(cfg);
-        above.vector = [ 0.0, 0.0, 2.9 ];
+        above.vector = [ 0.0, 0.0, 2.9, 0.0 ];
 
         Coordinate c = origin;
         c.applyForce(&cfg, &above, 5.3);
-        assert(c.vector == [ 0.0, 0.0, -5.3 ]);
+        assert(c.vector == [ 0.0, 0.0, -5.3, 0.0 ]);
 
         auto right = Coordinate(cfg);
-        right.vector = [ 3.4, 0.0, -5.3 ];
+        right.vector = [ 3.4, 0.0, -5.3, 0.0 ];
         c.applyForce(&cfg, &right, 2.0);
-        assert(c.vector == [ -2.0, 0.0, -5.3 ]);
+        assert(c.vector == [ -2.0, 0.0, -5.3, 0.0 ]);
 
         c = origin;
         c.applyForce(&cfg, &origin, 1.0);
@@ -242,12 +249,12 @@ private:
         origin = Coordinate(cfg);
         c = origin;
         c.applyForce(&cfg, &above, 5.3);
-        assert(c.vector == [ 0.0, 0.0, -5.3 ]);
+        assert(c.vector == [ 0.0, 0.0, -5.3, 0.0 ]);
         assert(isClose(c.height, cfg.minHeight + 5.3 * cfg.minHeight / 2.9));
 
         c = origin;
         c.applyForce(&cfg, &above, -5.3);
-        assert(c.vector == [ 0.0, 0.0, 5.3 ]);
+        assert(c.vector == [ 0.0, 0.0, 5.3, 0.0 ]);
         assert(isClose(c.height, cfg.minHeight));
     }
 }
@@ -270,6 +277,7 @@ private double magnitude(const double[Dimensionality] vec) pure nothrow @safe {
     return sqrt(sum);
 }
 
+@("magnitude")
 unittest {
     version (DigitalMars) {
         import std.math : isClose;
@@ -278,8 +286,8 @@ unittest {
         alias isClose = approxEqual;
     }
 
-    assert(magnitude([ 0.0, 0.0, 0.0 ]) == 0.0);
-    assert(isClose(magnitude([ 1.0, -2.0, 3.0 ]), 3.7416573867739413));
+    assert(magnitude([ 0.0, 0.0, 0.0, 0.0 ]) == 0.0);
+    assert(isClose(magnitude([ 1.0, -2.0, 3.0, -4.0 ]), 5.477225575052));
 }
 
 /**
@@ -319,6 +327,7 @@ private double unitvector(const double[Dimensionality] dest,
     return 0.0;
 }
 
+@("unitvector")
 unittest {
     version (DigitalMars) {
         import std.math : isClose;
@@ -327,15 +336,23 @@ unittest {
         alias isClose = approxEqual;
     }
 
-    double[Dimensionality] a = [ 1.0, 2.0, 3.0 ];
-    double[Dimensionality] b = [ 0.5, 0.6, 0.7 ];
+    double[Dimensionality] a = [ 1.0, 2.0, 3.0, 4.0 ];
+    double[Dimensionality] b = [ 0.5, 0.6, 0.7, 0.8 ];
 
     {
         double[Dimensionality] result;
 
         auto mag = unitvector(a, b, result);
         assert(isClose(magnitude(result), 1.0));
-        assert(result == [ 0.18257418583505536, 0.511207720338155, 0.8398412548412546 ]);
+
+        double[Dimensionality] expected = [0.118711610421,
+                                           0.332392509178,
+                                           0.546073407936,
+                                           0.759754306693];
+
+        foreach (int i, double v; result) {
+            assert(isClose(v, expected[i]));
+        }
     }
 
     {
