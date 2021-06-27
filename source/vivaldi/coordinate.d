@@ -40,7 +40,7 @@ struct Coordinate {
     /**
      * Constructs a new Coordinate at the origin.
      */
-    this(Config config) pure nothrow @safe {
+    this(Config config) pure nothrow @safe @nogc {
         error = config.maxError;
         height = config.minHeight;
     }
@@ -71,7 +71,7 @@ struct Coordinate {
      * `other`, updates the estimated position of this Coordinate.
      */
     void update(const Config* cfg, const Coordinate* other, const Duration rtt)
-         nothrow @safe {
+         nothrow @safe @nogc {
 
         import std.math : abs;
 
@@ -133,7 +133,7 @@ struct Coordinate {
     /**
      * Returns the distance to `other` in estimated round-trip time.
      */
-    Duration distanceTo(const Coordinate* other) const pure nothrow @safe {
+    Duration distanceTo(const Coordinate* other) const pure nothrow @safe @nogc {
         double[Dimensionality] diff = vector[] - other.vector[];
 
         // NB. height and magnitude are in seconds.
@@ -165,7 +165,7 @@ struct Coordinate {
 private:
 
     invariant {
-        static bool valid(double d) pure nothrow @safe {
+        static bool valid(double d) pure nothrow @safe @nogc {
             import std.math : isInfinity, isNaN;
             return !isInfinity(d) && !isNaN(d);
         }
@@ -202,7 +202,7 @@ private:
      * Applies a `force` in seconds against this coordinate from the
      * direction of `other`.
      */
-    void applyForce(const Config* cfg, const Coordinate* other, double force) nothrow @safe {
+    void applyForce(const Config* cfg, const Coordinate* other, double force) nothrow @safe @nogc {
         import std.algorithm : max;
 
         double[Dimensionality] unit;
@@ -261,7 +261,7 @@ private:
 
 
 // FIXME: scale to prevent overflow
-private double magnitude(const double[Dimensionality] vec) pure nothrow @safe {
+private double magnitude(const double[Dimensionality] vec) pure nothrow @safe @nogc {
     version (DigitalMars) {
         import std.math.algebraic : sqrt;
     } else version (LDC) {
@@ -297,13 +297,12 @@ unittest {
 private double unitvector(const double[Dimensionality] dest,
                           const double[Dimensionality] src,
                           ref double[Dimensionality] ret)
-     nothrow @safe {
+     nothrow @safe @nogc {
     import std.random : uniform01;
 
     double mag;
 
-    const double[Dimensionality] diff = dest[] - src[];
-    ret = diff.dup;
+    ret = dest[] - src[];
 
     mag = magnitude(ret);
     // Push if the two vectors aren't too close.
