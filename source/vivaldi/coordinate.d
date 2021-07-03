@@ -362,27 +362,21 @@ unittest {
     double[4] a = [ 1.0, 2.0, 3.0, 4.0 ];
     double[4] b = [ 0.5, 0.6, 0.7, 0.8 ];
 
-    {
-        double[4] result;
+    double[4] result;
 
-        auto mag = unitvector(a, b, result);
-        assert(isClose(magnitude(result), 1.0));
+    unitvector(a, b, result);
+    assert(isClose(magnitude(result), 1.0));
 
-        double[] expected = [0.118711610421,
-                                           0.332392509178,
-                                           0.546073407936,
-                                           0.759754306693];
+    double[] expected = [0.118711610421,
+                         0.332392509178,
+                         0.546073407936,
+                         0.759754306693];
 
-        foreach (int i, double v; result) {
-            assert(isClose(v, expected[i]));
-        }
+    foreach (int i, double v; result) {
+        assert(isClose(v, expected[i]));
     }
 
-    {
-        double[4] result;
-
-        auto mag = unitvector(a, a, result);
-        assert(isClose(magnitude(result), 1.0));
-        assert(isClose(mag, 0.0));
-    }
+    auto mag = unitvector(a, a, result);
+    assert(isClose(magnitude(result), 1.0));
+    assert(isClose(mag, 0.0));
 }
