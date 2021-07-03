@@ -1,11 +1,6 @@
 module vivaldi.config;
 
 /**
- * A pre-allocated config utilizing all default parameters.
- */
-static immutable Config defaultConfig = Config();
-
-/**
  * A set of configuration parameters for tuning the coordinate system.
  */
 struct Config {

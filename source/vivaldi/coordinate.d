@@ -10,6 +10,7 @@ debug(vivaldi) {
 
 // Following "Network Coordinates in the Wild" by Ledlie, et al., use
 // 4 dimensions plus "height".
+// TODO: Template-ize Coordinate on this value.
 private static enum Dimensionality = 4;
 
 private static enum ZeroThreshold = 1.0e-6;
@@ -17,9 +18,10 @@ private static enum ZeroThreshold = 1.0e-6;
 private static enum SecondsToNanos = 1.0e9;
 
 /**
- * A pre-allocated point at the origin of the coordinate system.
+ * A pre-allocated point at the origin of the coordinate system
+ * utilizing all default parameters.
  */
-static immutable Origin = Coordinate(defaultConfig);
+static immutable Origin = Coordinate(Config());
 
 /**
  * Coordinate represents a point in a Vivaldi network coordinate
