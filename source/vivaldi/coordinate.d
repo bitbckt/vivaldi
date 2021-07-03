@@ -279,7 +279,9 @@ private:
 
 
 // FIXME: scale to prevent overflow
-private double magnitude(const double[Dimensionality] vec) pure nothrow @safe @nogc {
+private double magnitude(size_t D)(const double[D] vec) pure nothrow @safe @nogc
+     if (D > 0)
+{
     version (DigitalMars) {
         import std.math.algebraic : sqrt;
     } else version (LDC) {
@@ -306,16 +308,18 @@ unittest {
 
     assert(magnitude([ 0.0, 0.0, 0.0, 0.0 ]) == 0.0);
     assert(isClose(magnitude([ 1.0, -2.0, 3.0, -4.0 ]), 5.477225575052));
+    assert(!__traits(compiles, magnitude([])));
 }
 
 /**
  * Returns a unit vector pointing at `dest` from `src` in `ret` and
  * the distance between the two inputs.
  */
-private double unitvector(const double[Dimensionality] dest,
-                          const double[Dimensionality] src,
-                          ref double[Dimensionality] ret)
-     nothrow @safe @nogc {
+private double unitvector(size_t D)(const double[D] dest,
+                          const double[D] src,
+                          ref double[D] ret) nothrow @safe @nogc
+     if (D > 0)
+{
     import std.random : uniform01;
 
     double mag;
@@ -353,16 +357,18 @@ unittest {
         alias isClose = approxEqual;
     }
 
-    double[Dimensionality] a = [ 1.0, 2.0, 3.0, 4.0 ];
-    double[Dimensionality] b = [ 0.5, 0.6, 0.7, 0.8 ];
+    assert(!__traits(compiles, unitvector([])));
+
+    double[4] a = [ 1.0, 2.0, 3.0, 4.0 ];
+    double[4] b = [ 0.5, 0.6, 0.7, 0.8 ];
 
     {
-        double[Dimensionality] result;
+        double[4] result;
 
         auto mag = unitvector(a, b, result);
         assert(isClose(magnitude(result), 1.0));
 
-        double[Dimensionality] expected = [0.118711610421,
+        double[] expected = [0.118711610421,
                                            0.332392509178,
                                            0.546073407936,
                                            0.759754306693];
@@ -373,7 +379,7 @@ unittest {
     }
 
     {
-        double[Dimensionality] result;
+        double[4] result;
 
         auto mag = unitvector(a, a, result);
         assert(isClose(magnitude(result), 1.0));
