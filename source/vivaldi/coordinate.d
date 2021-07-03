@@ -334,6 +334,9 @@ private double unitvector(size_t D)(const double[D] dest,
     }
 
     // Push in a random direction if they _are_ close.
+    //
+    // cf. "Two nodes occupying the same location will have a spring
+    // pushing them away from each other in some arbitrary direction."
     ret[] *= uniform01() - 0.5;
 
     mag = magnitude(ret);
@@ -342,7 +345,8 @@ private double unitvector(size_t D)(const double[D] dest,
         return 0.0;
     }
 
-    // Well, that didn't work out... push along the first dimension.
+    // Well, that didn't work out... push along the first dimension;
+    // it is the only dimension all coordinates have.
     ret[] = 0.0;
     ret[0] = 1.0;
     return 0.0;
