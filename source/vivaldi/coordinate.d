@@ -87,7 +87,9 @@ struct Coordinate {
             nanos = ZeroThreshold;
         }
 
+        // This term is the relative error of this sample.
         const double err = abs(dist - nanos) / nanos;
+
         double total = error + other.error;
 
         if (total < ZeroThreshold) {
@@ -98,10 +100,12 @@ struct Coordinate {
         // error -> large force.
         const double weight = error / total;
 
-        error = cfg.ce * weight * err + error * (1.0 - cfg.ce * weight);
+        error = err * cfg.ce * weight + error * (1.0 - cfg.ce * weight);
+
+        double delta = cfg.cc * weight;
 
         // NB. force is in seconds
-        double force = (cfg.cc * weight) * (nanos - dist) / SecondsToNanos;
+        double force = delta * (nanos - dist) / SecondsToNanos;
 
         debug(vivaldi) {
             tracef("applying force %f from %s to %s due to RTT %s",
