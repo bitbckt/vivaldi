@@ -18,12 +18,6 @@ private static enum ZeroThreshold = 1.0e-6;
 private static enum SecondsToNanos = 1.0e9;
 
 /**
- * A pre-allocated point at the origin of the coordinate system
- * utilizing all default parameters.
- */
-static immutable Origin = Coordinate(Config());
-
-/**
  * Coordinate represents a point in a Vivaldi network coordinate
  * system.
  *
@@ -82,7 +76,7 @@ struct Coordinate {
 
         import std.math : abs, pow;
 
-        double dist = distanceTo(other).total!"nsecs";
+        const double dist = distanceTo(other).total!"nsecs";
         double nanos = rtt.total!"nsecs";
 
         if (nanos < ZeroThreshold) {
@@ -104,7 +98,7 @@ struct Coordinate {
 
         error = err * cfg.ce * weight + error * (1.0 - cfg.ce * weight);
 
-        double delta = cfg.cc * weight;
+        const double delta = cfg.cc * weight;
 
         // NB. force is in seconds
         double force = delta * (nanos - dist) / SecondsToNanos;
@@ -120,8 +114,10 @@ struct Coordinate {
         // Apply the force exerted by the other node.
         applyForce(cfg, other, force);
 
-        dist = Origin.distanceTo(&this).total!"seconds";
-        force = -1.0 * pow(dist / cfg.rho, 2.0);
+        // Gravity toward the origin exerts a pulling force which is a
+        // small fraction of the expected diameter of the network.
+        // "Network Coordinates in the Wild", Sec. 7.2
+        force = -1.0 * pow((magnitude(vector) + height) / cfg.rho, 2.0);
 
         debug(vivaldi) {
             tracef("applying force %f to %s due to gravity",
@@ -129,12 +125,16 @@ struct Coordinate {
                    this);
         }
 
+        scope auto origin = Coordinate(*cfg);
+
         // Apply the force of gravity exerted by the origin.
-        applyForce(cfg, &Origin, force);
+        applyForce(cfg, &origin, force);
     }
 
     @("update")
     unittest {
+        import unit_threaded.runner.io;
+        enableDebugOutput();
         Config cfg;
         Coordinate c = Coordinate(cfg);
 
@@ -144,7 +144,7 @@ struct Coordinate {
         Coordinate other = Coordinate(cfg);
         other.vector[2] = 0.001;
 
-        Duration rtt = msecs(2);
+        Duration rtt = msecs(200);
         c.update(&cfg, &other, rtt);
 
         // The coordinate should be pushed away along the correct axis.
@@ -225,8 +225,14 @@ private:
     /**
      * Applies a `force` in seconds against this coordinate from the
      * direction of `other`.
+     *
+     * If force is a positive value, this coordinate will be pushed
+     * away from other. If negative, this coordinate will be pulled
+     * closer to other.
      */
-    void applyForce(const Config* cfg, const Coordinate* other, double force) nothrow @safe @nogc {
+    void applyForce(scope const Config* cfg,
+                    scope const Coordinate* other,
+                    double force) nothrow @safe @nogc {
         import std.algorithm : max;
 
         double[Dimensionality] unit;
