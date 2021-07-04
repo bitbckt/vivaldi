@@ -99,7 +99,7 @@ struct Coordinate(size_t dims,
         // Gravity toward the origin exerts a pulling force which is a
         // small fraction of the expected diameter of the network.
         // "Network Coordinates in the Wild", Sec. 7.2
-        force = -1.0 * pow((magnitude(vector) + height) / rho, 2.0);
+        force = -1.0 * pow((magnitude(vector) + height + minHeight) / rho, 2.0);
 
         debug(vivaldi) {
             tracef("applying force %f to %s due to gravity",
