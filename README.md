@@ -4,8 +4,19 @@
 [![codecov](https://codecov.io/gh/bitbckt/vivaldi/branch/master/graph/badge.svg?token=W1CUSL1E3N)](https://codecov.io/gh/bitbckt/vivaldi)
 
 vivaldi is a D library based on "Vivaldi: A Decentralized Network
-Coordinate System" by Frak Dabek, Russ Cox, Frans Kaashoek, and Robert
-Morris.
+Coordinate System" by Frank Dabek, Russ Cox, Frans Kaashoek, and
+Robert Morris.
+
+## References
+
+F. Dabek, R. Cox, F. Kaashoek, and R. Morris. Vivaldi: A Decentralized
+Network Coordinate System. In _Proc. of SIGCOMM_, Aug. 2004.
+
+J. Ledlie, P. Gardner, and M. Seltzer. Network Coordinates in the
+Wild. In _Proc. of NSDI_, 2007.
+
+P. Ekstrom. Better Than Average. In _Embedded Systems Programming_,
+Nov. 2000.
 
 ## License
 
