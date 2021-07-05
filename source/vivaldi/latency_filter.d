@@ -2,11 +2,15 @@ module vivaldi.latency_filter;
 
 import vivaldi.coordinate;
 
+import std.traits : isFloatingPoint;
+
 /**
  * A helper for constructing and properly initializing a Buffer.
  */
-private auto buffer(size_t window)() {
-    Buffer!window* buf = new Buffer!window;
+private auto buffer(T, size_t window)()
+     if (isFloatingPoint!T)
+{
+    auto buf = new Buffer!(T, window);
 
     foreach (i, ref node; buf.buffer) {
         node.prev = (i + window - 1) % window;
@@ -17,27 +21,37 @@ private auto buffer(size_t window)() {
 }
 
 /**
- * Median filter based on Ekstrom, P. (2000, November). "Better Than
- * Average". _Embedded Systems Programming_, 100-110.
+ * Median filter based on "Better Than Average" by Paul Ekstrom.
+ *
+ * By combining a ring buffer with a sorted linked list, this
+ * implementation offers O(n) complexity. A naive implementation which
+ * requires sorting the window is O(n^2).
  *
  * Params:
+ *      T = The datum type.
  *      window = The number of data points in the filter window.
  */
-private struct Buffer(size_t window)
-     if (window > 0)
+private struct Buffer(T, size_t window)
+     if (isFloatingPoint!(T) && window > 0)
 {
     struct Node {
-        double value;
+        T value;
         size_t prev;
         size_t next;
     }
 
     Node[window] buffer;
+
+    // Cursor points at the next insertion point in the ring buffer.
     size_t cursor = 0;
+
+    // Head points at the smallest value in the linked list.
     size_t head = 0;
+
+    // Median points at the median value.
     size_t median = 0;
 
-    double push(double datum) nothrow @safe @nogc {
+    T push(T datum) nothrow @safe @nogc {
         import std.math : isNaN;
 
         // If the current head will be overwritten, move it to the
@@ -53,7 +67,7 @@ private struct Buffer(size_t window)
 
         buffer[pred].next = succ;
 
-        buffer[cursor].value = float.nan;
+        buffer[cursor].value = T.nan;
         buffer[cursor].prev = size_t.max;
         buffer[cursor].next = size_t.max;
 
@@ -116,7 +130,7 @@ private struct Buffer(size_t window)
         return buffer[median].value;
     }
 
-    void insert(double datum, size_t index) nothrow @safe @nogc {
+    void insert(T datum, size_t index) nothrow @safe @nogc {
         const auto succ = index;
         const auto pred = buffer[index].prev;
 
@@ -136,7 +150,7 @@ private struct Buffer(size_t window)
 
 version(unittest) {
     double[] compute(size_t n)(const double[] input) {
-        auto buf = buffer!n;
+        auto buf = buffer!(double, n);
         double[] output;
 
         foreach (i; input) {
@@ -288,24 +302,25 @@ unittest {
  *
  * Params:
  *      T = The node type.
+ *      U = The datum type.
  *      window = The size of the moving filter window.
  */
-struct LatencyFilter(T, size_t window)
-     if (window > 0)
+struct LatencyFilter(T, U, size_t window)
+     if (isFloatingPoint!U && window > 0)
 {
-    private alias B = Buffer!window;
+    private alias B = Buffer!(U, window);
 
     /**
      * Pushes a new latency datum into the filter window for a node,
      * and returns the current median value from the filter.
      */
-    double push(T node, double rtt) @safe {
+    U push(T node, U rtt) @safe {
         import std.algorithm : sort;
         import std.math : isNaN;
 
         assert(!isNaN(rtt));
 
-        B* buf = data.require(node, buffer!window);
+        B* buf = data.require(node, buffer!(U, window));
 
         return buf.push(rtt);
     }
@@ -314,11 +329,11 @@ struct LatencyFilter(T, size_t window)
      * Returns the current median latency for a node. If no data has
      * been recorded for the node, returns NaN.
      */
-    double get(T node) {
+    U get(T node) {
         B** p = node in data;
 
         if (p is null) {
-            return float.nan;
+            return U.nan;
         }
 
         auto buf = *p;
@@ -350,7 +365,7 @@ private:
 unittest {
     import std.math : isNaN;
 
-    auto filter = new LatencyFilter!(string, 5);
+    auto filter = new LatencyFilter!(string, double, 5);
 
     double[] input = [3, 2, 4, 6, 5, 1];
     double[] output;
