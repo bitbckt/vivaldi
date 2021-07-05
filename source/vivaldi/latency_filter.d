@@ -329,7 +329,7 @@ struct LatencyFilter(T, U, size_t window)
      * Returns the current median latency for a node. If no data has
      * been recorded for the node, returns NaN.
      */
-    U get(T node) {
+    U get(T node) nothrow @safe @nogc {
         B** p = node in data;
 
         if (p is null) {
