@@ -43,9 +43,13 @@ private struct Buffer(size_t window)
     double push(double datum) nothrow @safe @nogc {
         import std.math : isNaN;
 
+        // If the current head will be overwritten, move it to the
+        // next node.
         if (cursor == head) {
             head = buffer[head].next;
         }
+
+        // Remove the node at cursor; it will be overwritten.
 
         auto pred = buffer[cursor].prev;
         auto succ = buffer[cursor].next;
@@ -58,6 +62,7 @@ private struct Buffer(size_t window)
 
         buffer[succ].prev = pred;
 
+        // Point the median at the minimum value in the list.
         median = head;
 
         auto cur = head;
@@ -73,11 +78,14 @@ private struct Buffer(size_t window)
                 }
 
                 if (shouldInsert) {
+                    // Insert the removed node with its new value.
                     insert(datum, cur);
                     inserted = true;
                 }
             }
 
+            // Shift the median on every other node. It will
+            // eventually end up in the middle.
             if ((i & 0x1) == 0x1 && !isNaN(buffer[cur].value)) {
                 median = buffer[median].next;
             }
@@ -88,6 +96,7 @@ private struct Buffer(size_t window)
         auto hd = buffer[head].value;
         auto updateHead = true;
 
+        // Update the head if the new datum is the minimum value.
         if (!isNaN(hd)) {
             updateHead = datum <= hd;
         }
@@ -97,6 +106,9 @@ private struct Buffer(size_t window)
             median = buffer[median].prev;
         }
 
+        // If the window is a multiple of 2, shift the median backward
+        // such that it points to the smaller of the two median
+        // values.
         static if (window % 2 == 0) {
             median = buffer[median].prev;
         }
@@ -107,7 +119,7 @@ private struct Buffer(size_t window)
         return buffer[median].value;
     }
 
-    private void insert(double datum, size_t index) nothrow @safe @nogc {
+    void insert(double datum, size_t index) nothrow @safe @nogc {
         const auto succ = index;
         const auto pred = buffer[index].prev;
 
