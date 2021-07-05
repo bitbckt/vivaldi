@@ -36,8 +36,8 @@ private static enum NanosPerSecond = 1.0e9;
  *      ce = A tuning factor which impacts the maximum impact an observation
  *           can have on a Coordinate.
  *      cc = ditto
- *      rho = A tuning factor for the affect of gravity exerted by the origin to
- *            control drift.  See "Network Coordinates in the Wild" by
+ *      rho = A tuning factor for the effect of gravity exerted by the origin to
+ *            control drift. See "Network Coordinates in the Wild" by
  *            Ledlie, et al. for more information.
  */
 struct Coordinate(size_t dims,
