@@ -2,9 +2,6 @@ module vivaldi.latency_filter;
 
 import vivaldi.coordinate;
 
-import std.container : DList;
-import unit_threaded.runner.io;
-
 /**
  * A helper for constructing and properly initializing a Buffer.
  */
