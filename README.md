@@ -15,6 +15,10 @@ Network Coordinate System. In _Proc. of SIGCOMM_, Aug. 2004.
 J. Ledlie, P. Gardner, and M. Seltzer. Network Coordinates in the
 Wild. In _Proc. of NSDI_, 2007.
 
+S. Lee, Z. Zhang, S. Sahu, and D. Saha. On Suitability of Euclidean
+Embedding forHost-based Network Coordinate System. In _IEEE/ACM
+Transactions on Networking_, Feb. 2010.
+
 P. Ekstrom. Better Than Average. In _Embedded Systems Programming_,
 Nov. 2000.
 
