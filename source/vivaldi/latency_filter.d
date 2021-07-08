@@ -63,7 +63,7 @@ private struct Buffer(T, size_t window)
      * Returns the minimum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T min() nothrow @safe @nogc {
+    T min() pure nothrow @safe @nogc {
         return buffer[head].value;
     }
 
@@ -71,7 +71,7 @@ private struct Buffer(T, size_t window)
      * Returns the maximum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T max() nothrow @safe @nogc {
+    T max() pure nothrow @safe @nogc {
         import std.math : isNaN;
 
         auto cur = buffer[head].next;
