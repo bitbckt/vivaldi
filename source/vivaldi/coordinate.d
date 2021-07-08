@@ -56,6 +56,7 @@ struct Coordinate(size_t dims,
     void update(const Coordinate* other, const Duration rtt)
          nothrow @safe @nogc {
 
+        import std.algorithm : min;
         import std.math : abs, pow;
 
         const double dist = distanceTo(other).total!"nsecs";
@@ -78,7 +79,7 @@ struct Coordinate(size_t dims,
         // error -> large force.
         const double weight = error / total;
 
-        error = err * ce * weight + error * (1.0 - ce * weight);
+        error = min(err * ce * weight + error * (1.0 - ce * weight), maxError);
 
         const double delta = cc * weight;
 
@@ -213,6 +214,38 @@ nothrow @safe @nogc unittest {
     assert(c.vector[1] == 0.0);
     assert(c.vector[2] < 0.0);
     assert(c.vector[3] == 0.0);
+}
+
+@("zero rtt")
+nothrow @safe @nogc unittest {
+    auto c = Coordinate!4();
+    auto other = Coordinate!4();
+
+    Duration rtt = nsecs(0);
+    c.update(&other, rtt);
+
+    // A zero RTT pushes away regardless.
+    assert(c.distanceTo(&other) > nsecs(0));
+
+    // The error term should not blow out.
+    assert(c.error == 1.5);
+}
+
+@("zero error")
+unittest {
+    auto c = Coordinate!4();
+    auto other = Coordinate!4();
+
+    // This test the invariant that total error does not
+    // divide-by-zero and cause the coordinate to be invalid.
+    c.error = 0;
+    other.error = 0;
+
+    Duration rtt = msecs(100);
+    c.update(&other, rtt);
+
+    assert(c.error == 0);
+    assert(c.distanceTo(&other) > nsecs(0));
 }
 
 @("distanceTo")
