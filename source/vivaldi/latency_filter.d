@@ -199,13 +199,17 @@ version(unittest) {
             output ~= buf.push(i);
 
             version (LDC) {
-                // min(NaN, ...) == NaN on LDC.
-                const auto data = buf.buffer.dup.filter!(a => !isNaN(a.value));
+                const auto expected = buf.buffer.dup
+                    .filter!(a => !isNaN(a.value)) // min(NaN, ...) == NaN on LDC.
+                    .map!(a => a.value)
+                    .reduce!min;
             } else {
-                const auto data = buf.buffer.dup;
+                const auto expected = buf.buffer.dup
+                    .map!(a => a.value)
+                    .reduce!min;
             }
 
-            assert(buf.min == data.map!(a => a.value).reduce!min);
+            assert(buf.min == expected);
             assert(buf.max == buf.buffer.dup.map!(a => a.value).reduce!max);
         }
 
