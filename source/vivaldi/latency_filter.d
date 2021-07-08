@@ -8,15 +8,9 @@ import std.traits : isFloatingPoint;
  * A helper for constructing and properly initializing a Buffer.
  */
 private auto buffer(T, size_t window)()
-     if (isFloatingPoint!T)
 {
     auto buf = new Buffer!(T, window);
-
-    foreach (i, ref node; buf.buffer) {
-        node.prev = (i + window - 1) % window;
-        node.next = (i + 1) % window;
-    }
-
+    buf.initialize();
     return buf;
 }
 
@@ -51,6 +45,51 @@ private struct Buffer(T, size_t window)
     // Median points at the median value.
     size_t median = 0;
 
+    /**
+     * Initializes the linked list and sets the ringbuffer values to NaN.
+     *
+     * This method must be called prior to `push`, but may be called
+     * again to reset the state of the buffer.
+     */
+    void initialize() nothrow @safe @nogc {
+        foreach (i, ref node; buffer) {
+            node.value = T.nan;
+            node.prev = (i + window - 1) % window;
+            node.next = (i + 1) % window;
+        }
+    }
+
+    /**
+     * Returns the minimum datum within this buffer. If no data has
+     * been pushed, returns NaN.
+     */
+    T min() nothrow @safe @nogc {
+        return buffer[head].value;
+    }
+
+    /**
+     * Returns the maximum datum within this buffer. If no data has
+     * been pushed, returns NaN.
+     */
+    T max() nothrow @safe @nogc {
+        import std.math : isNaN;
+
+        auto cur = buffer[head].next;
+
+        while (!isNaN(buffer[cur].value) && cur != head) {
+            cur = buffer[cur].next;
+        }
+
+        auto prev = buffer[cur].prev;
+        return buffer[prev].value;
+    }
+
+    /**
+     * Pushes a new datum into the ring buffer, and updates the head
+     * and median indexes.
+     *
+     * Returns the median after the datum has been pushed.
+     */
     T push(T datum) nothrow @safe @nogc {
         import std.math : isNaN;
 
@@ -150,16 +189,40 @@ private struct Buffer(T, size_t window)
 
 version(unittest) {
     double[] compute(size_t n)(const double[] input) {
+        import std.algorithm;
+        import std.math : isNaN;
+
         auto buf = buffer!(double, n);
         double[] output;
 
         foreach (i; input) {
             output ~= buf.push(i);
+
+            version (LDC) {
+                // min(NaN, ...) == NaN on LDC.
+                auto data = buf.buffer.dup.filter!(a => !isNaN(a.value));
+            } else {
+                auto data = buf.buffer.dup;
+            }
+
+            assert(buf.min == data.map!(a => a.value).reduce!min);
+            assert(buf.max == buf.buffer.dup.map!(a => a.value).reduce!max);
         }
 
         return output;
     }
  }
+
+@("attributes")
+nothrow @safe @nogc unittest {
+    auto buf = Buffer!(double, 4)();
+
+    buf.initialize();
+
+    assert(buf.push(10) == 10);
+    assert(buf.min == 10);
+    assert(buf.max == 10);
+}
 
 @("single peak 4")
 unittest {
