@@ -28,7 +28,7 @@ struct Node(T, size_t window = 0)
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      */
-    void update(const Node* other, const Duration rtt) {
+    void update(const Node* other, const Duration rtt) nothrow @safe @nogc {
         coordinate.update(&other.coordinate, rtt);
 
         static if (window > 0) {
@@ -53,7 +53,7 @@ struct Node(T, size_t window = 0)
     /**
      * Returns the distance to `other` in estimated round-trip time.
      */
-    Duration distanceTo(const Node* other) {
+    Duration distanceTo(const Node* other) nothrow @safe @nogc {
         auto dist = coordinate.distanceTo(&other.coordinate);
 
         static if (window > 0) {
@@ -81,23 +81,23 @@ private:
 }
 
 @("no adjustment")
-unittest {
+nothrow @safe @nogc unittest {
     alias C4 = Coordinate!4;
 
-    auto a = new Node!C4;
-    auto b = new Node!C4;
+    auto a = Node!C4();
+    auto b = Node!C4();
 
-    a.update(b, msecs(200));
-    assert(a.distanceTo(b) > msecs(0));
+    a.update(&b, msecs(200));
+    assert(a.distanceTo(&b) > msecs(0));
 }
 
 @("adjustment")
-unittest {
+nothrow @safe @nogc unittest {
     alias C4 = Coordinate!4;
 
-    auto a = new Node!(C4, 10);
-    auto b = new Node!(C4, 10);
+    auto a = Node!(C4, 10)();
+    auto b = Node!(C4, 10)();
 
-    a.update(b, msecs(200));
-    assert(a.distanceTo(b) > a.coordinate.distanceTo(&b.coordinate));
+    a.update(&b, msecs(200));
+    assert(a.distanceTo(&b) > a.coordinate.distanceTo(&b.coordinate));
 }

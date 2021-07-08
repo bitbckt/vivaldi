@@ -186,8 +186,8 @@ private:
 }
 
 @("defaults")
-unittest {
-    auto coord = new Coordinate!4;
+nothrow @safe @nogc unittest {
+    auto coord = Coordinate!4();
 
     assert(coord.vector == [ 0.0, 0.0, 0.0, 0.0 ]);
     assert(magnitude(coord.vector) == 0.0);
@@ -196,17 +196,17 @@ unittest {
 }
 
 @("update")
-unittest {
-    auto c = new Coordinate!4;
+nothrow @safe @nogc unittest {
+    auto c = Coordinate!4();
 
     assert(c.vector == [ 0.0, 0.0, 0.0, 0.0 ]);
 
     // Place another node above and nearby; update with a high RTT.
-    auto other = new Coordinate!4;
+    auto other = Coordinate!4();
     other.vector[2] = 0.001;
 
     Duration rtt = msecs(200);
-    c.update(other, rtt);
+    c.update(&other, rtt);
 
     // The coordinate should be pushed away along the correct axis.
     assert(c.vector[0] == 0.0);
@@ -216,24 +216,24 @@ unittest {
 }
 
 @("distanceTo")
-unittest {
-    auto c1 = new Coordinate!(4, 1.5, 0);
+nothrow @safe @nogc unittest {
+    auto c1 = Coordinate!(4, 1.5, 0)();
     c1.vector = [ -0.5, 1.3, 2.4, 0.0 ];
 
-    auto c2 = new Coordinate!(4, 1.5, 0);
+    auto c2 = Coordinate!(4, 1.5, 0)();
     c2.vector = [ 1.2, -2.3, 3.4, 0.0 ];
 
-    assert(c1.distanceTo(c1).total!"msecs" == 0);
-    assert(c1.distanceTo(c2).total!"msecs" == c2.distanceTo(c1).total!"msecs");
-    assert(c1.distanceTo(c2).total!"msecs" == 4104);
+    assert(c1.distanceTo(&c1).total!"msecs" == 0);
+    assert(c1.distanceTo(&c2).total!"msecs" == c2.distanceTo(&c1).total!"msecs");
+    assert(c1.distanceTo(&c2).total!"msecs" == 4104);
 
     c1.height = 0.7;
     c2.height = 0.1;
-    assert(c1.distanceTo(c2).total!"msecs" == 4104 + 800);
+    assert(c1.distanceTo(&c2).total!"msecs" == 4104 + 800);
 }
 
 @("applyForce zero height")
-unittest {
+nothrow @safe @nogc unittest {
     version (DigitalMars) {
         import std.math : isClose;
     } else version (LDC) {
@@ -241,27 +241,27 @@ unittest {
         alias isClose = approxEqual;
     }
 
-    auto origin = new Coordinate!(4, 1.5, 0);
+    auto origin = Coordinate!(4, 1.5, 0)();
 
-    auto above = new Coordinate!(4, 1.5, 0);
+    auto above = Coordinate!(4, 1.5, 0)();
     above.vector = [ 0.0, 0.0, 2.9, 0.0 ];
 
-    auto c = *origin;
-    c.applyForce(above, 5.3);
+    auto c = origin;
+    c.applyForce(&above, 5.3);
     assert(c.vector == [ 0.0, 0.0, -5.3, 0.0 ]);
 
-    auto right = new Coordinate!(4, 1.5, 0);
+    auto right = Coordinate!(4, 1.5, 0)();
     right.vector = [ 3.4, 0.0, -5.3, 0.0 ];
-    c.applyForce(right, 2.0);
+    c.applyForce(&right, 2.0);
     assert(c.vector == [ -2.0, 0.0, -5.3, 0.0 ]);
 
-    c = *origin;
-    c.applyForce(origin, 1.0);
+    c = origin;
+    c.applyForce(&origin, 1.0);
     assert(origin.distanceTo(&c) == seconds(1));
 }
 
 @("applyForce default height")
-unittest {
+nothrow @safe @nogc unittest {
     version (DigitalMars) {
         import std.math : isClose;
     } else version (LDC) {
@@ -269,18 +269,18 @@ unittest {
         alias isClose = approxEqual;
     }
 
-    auto origin = new Coordinate!4;
-    auto c = *origin;
+    auto origin = Coordinate!4();
+    auto c = origin;
 
-    auto above = new Coordinate!4;
+    auto above = Coordinate!4();
     above.vector = [ 0.0, 0.0, 2.9, 0.0 ];
 
-    c.applyForce(above, 5.3);
+    c.applyForce(&above, 5.3);
     assert(c.vector == [ 0.0, 0.0, -5.3, 0.0 ]);
     assert(isClose(c.height, (1.0e-5 + above.height) * 5.3 / 2.9 + 1.0e-5));
 
-    c = *origin;
-    c.applyForce(above, -5.3);
+    c = origin;
+    c.applyForce(&above, -5.3);
     assert(c.vector == [ 0.0, 0.0, 5.3, 0.0 ]);
     assert(isClose(c.height, 1.0e-5));
 }
@@ -305,7 +305,7 @@ private double magnitude(size_t D)(const double[D] vec) pure nothrow @safe @nogc
 }
 
 @("magnitude")
-unittest {
+nothrow @nogc @safe unittest {
     version (DigitalMars) {
         import std.math : isClose;
     } else version (LDC) {
@@ -360,7 +360,7 @@ private double unitvector(size_t D)(const double[D] dest,
 }
 
 @("unitvector")
-unittest {
+nothrow @safe @nogc unittest {
     version (DigitalMars) {
         import std.math : isClose;
     } else version (LDC) {
@@ -378,7 +378,7 @@ unittest {
     unitvector(a, b, result);
     assert(isClose(magnitude(result), 1.0));
 
-    double[] expected = [0.118711610421,
+    double[4] expected = [0.118711610421,
                          0.332392509178,
                          0.546073407936,
                          0.759754306693];
