@@ -200,9 +200,9 @@ version(unittest) {
 
             version (LDC) {
                 // min(NaN, ...) == NaN on LDC.
-                auto data = buf.buffer.dup.filter!(a => !isNaN(a.value));
+                const auto data = buf.buffer.dup.filter!(a => !isNaN(a.value));
             } else {
-                auto data = buf.buffer.dup;
+                const auto data = buf.buffer.dup;
             }
 
             assert(buf.min == data.map!(a => a.value).reduce!min);
