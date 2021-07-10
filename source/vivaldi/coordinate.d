@@ -78,7 +78,6 @@ struct Coordinate(size_t dims,
 
         const double delta = cc * weight;
 
-        // NB. force is in seconds
         double force = delta * (rtt - dist);
 
         debug(vivaldi) {
@@ -160,8 +159,8 @@ struct Coordinate(size_t dims,
      * away from other. If negative, this coordinate will be pulled
      * closer to other.
      */
-    private void applyForce(scope const Coordinate* other,
-                    double force) nothrow @safe @nogc {
+    private void applyForce(scope const Coordinate* other, double force)
+         nothrow @safe @nogc {
         import std.algorithm : max;
 
         double[dims] unit;
@@ -284,7 +283,7 @@ nothrow @safe @nogc unittest {
 
     c = origin;
     c.applyForce(&origin, 1.0);
-    assert(origin.distanceTo(&c) == 1);
+    assert(isClose(origin.distanceTo(&c), 1.0));
 }
 
 @("applyForce default height")
@@ -358,7 +357,7 @@ private double unitvector(size_t D)(const double[D] dest,
 
     double mag;
 
-    ret = dest[] - src[];
+    ret[] = dest[] - src[];
 
     mag = magnitude(ret);
     // Push if the two vectors aren't too close.
