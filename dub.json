@@ -13,10 +13,12 @@
         {
             "name": "unittest",
             "targetType": "executable",
+            "sourcePaths": ["tests"],
             "preBuildCommands": ["$DUB run --compiler=$$DC unit-threaded -c gen_ut_main -- -f bin/ut.d -d $DUB"],
             "mainSourceFile": "bin/ut.d",
             "dependencies": {
-                "unit-threaded": "*"
+                "unit-threaded": "*",
+                "mir-random": "~>2.2.17"
             }
         }
     ]
