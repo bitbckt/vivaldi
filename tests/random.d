@@ -4,8 +4,6 @@ import tests.utils;
 import vivaldi.coordinate;
 import vivaldi.node;
 
-private static enum NanosPerSecond = 1.0e9;
-
 /**
  * Generates an NxN matrix of latencies using a randomized normal
  * distribution.
@@ -15,10 +13,10 @@ template random(size_t n, double mean, double stddev) {
     import mir.random;
     import mir.random.variable;
 
-    auto random() {
+    auto random() nothrow @safe @nogc {
         Random gen = Random(1);
         auto rv = NormalVariable!double(mean, stddev);
-        auto matrix = new double[n][n];
+        auto matrix = matrix!n;
 
         for (size_t i = 0; i < n; i++) {
             for (size_t j = i + 1; j < n; j++) {
@@ -35,6 +33,7 @@ template random(size_t n, double mean, double stddev) {
 
 @("random")
 unittest {
+    import std.format;
     import std.random;
 
     // Stable seed for random unitvectors.
@@ -48,8 +47,11 @@ unittest {
     auto cycles = 1000;
 
     N[n] nodes = new N[n];
-    double[n][n] matrix = random!(n, mean, stddev)();
+    double[n][n] matrix = random!(n, mean, stddev);
 
     simulate!(N, 3, n)(nodes, matrix, cycles);
-    evaluate!(N, n)(nodes, matrix);
+    auto stats = evaluate!(N, n)(nodes, matrix);
+
+    assert(stats.mean <= 0.077, format("mean=%s", stats.mean));
+    assert(stats.max <= 0.37, format("max=%s", stats.max));
 }

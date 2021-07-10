@@ -48,14 +48,21 @@ struct Coordinate(size_t dims,
     /**
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
+     *
+     * The adjustment parameter is used for hybrid coordinates. See Node.
      */
-    void update(const Coordinate* other, double rtt)
+    void update(const Coordinate* other, double rtt, double adjustment = 0.0)
          nothrow @safe @nogc {
 
         import std.algorithm : min;
         import std.math : abs, pow;
 
-        const double dist = distanceTo(other);
+        double dist = distanceTo(other);
+        const double adj = dist + adjustment;
+
+        if (adj > 0.0) {
+            dist = adj;
+        }
 
         if (rtt < ZeroThreshold) {
             rtt = ZeroThreshold;
@@ -91,7 +98,7 @@ struct Coordinate(size_t dims,
         // Apply the force exerted by the other node.
         applyForce(other, force);
 
-        scope Coordinate origin = typeof(this)();
+        scope origin = Coordinate();
 
         // Gravity toward the origin exerts a pulling force which is a
         // small fraction of the expected diameter of the network.
@@ -287,7 +294,9 @@ nothrow @safe @nogc unittest {
 }
 
 @("applyForce default height")
-nothrow @safe @nogc unittest {
+@safe unittest {
+    import std.format;
+
     version (DigitalMars) {
         import std.math : isClose;
     } else version (LDC) {
@@ -300,10 +309,11 @@ nothrow @safe @nogc unittest {
 
     auto above = Coordinate!3();
     above.vector = [ 0.0, 0.0, 2.9 ];
+    above.height = 0.0;
 
     c.applyForce(&above, 5.3);
     assert(c.vector == [ 0.0, 0.0, -5.3 ]);
-    assert(isClose(c.height, (1.0e-5 + above.height) * 5.3 / 2.9 + 1.0e-5));
+    assert(isClose(c.height, 1.0e-5 + 5.3 * 1.0e-5 / 2.9));
 
     c = origin;
     c.applyForce(&above, -5.3);
@@ -340,7 +350,7 @@ nothrow @nogc @safe unittest {
     }
 
     assert(magnitude([ 0.0, 0.0, 0.0, 0.0 ]) == 0.0);
-    assert(isClose(magnitude([ 1.0, -2.0, 3.0, -4.0 ]), 5.477225575052));
+    assert(isClose(magnitude([ 1.0, -2.0, 3.0 ]), 3.7416573867739413));
     assert(!__traits(compiles, magnitude([])));
 }
 
@@ -403,15 +413,21 @@ nothrow @safe @nogc unittest {
 
     double[3] result;
 
-    unitvector(a, b, result);
-    assert(isClose(magnitude(result), 1.0));
+    {
+        auto mag = unitvector(a, b, result);
+        assert(isClose(magnitude(result), 1.0));
 
-    double[3] expected = [0.18257418583505536,
-                          0.511207720338155,
-                          0.8398412548412546];
+        double[3] diff;
+        diff = a[] - b[];
+        assert(isClose(mag, magnitude(diff)));
 
-    foreach (int i, double v; result) {
-        assert(isClose(v, expected[i]));
+        double[3] expected = [0.18257418583505536,
+                              0.511207720338155,
+                              0.8398412548412546];
+
+        foreach (int i, double v; result) {
+            assert(isClose(v, expected[i]));
+        }
     }
 
     auto mag = unitvector(a, a, result);

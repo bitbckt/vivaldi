@@ -24,10 +24,9 @@ struct Node(T, size_t window = 0)
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      */
-    void update(const Node* other, double rtt) nothrow @safe @nogc {
-        coordinate.update(&other.coordinate, rtt);
-
+    void update(const Node* other, const double rtt) nothrow @safe @nogc {
         static if (window > 0) {
+            coordinate.update(&other.coordinate, rtt, adjustment + other.adjustment);
             const auto dist = coordinate.distanceTo(&other.coordinate);
 
             // NOTE: Rather than choosing landmarks as described in
@@ -43,6 +42,8 @@ struct Node(T, size_t window = 0)
             }
 
             adjustment = sum / (2.0 * cast(double)window);
+        } else {
+            coordinate.update(&other.coordinate, rtt);
         }
     }
 
@@ -66,8 +67,9 @@ struct Node(T, size_t window = 0)
         return dist;
     }
 
-private:
     T coordinate;
+
+private:
 
     static if (window > 0) {
         double adjustment = 0.0;

@@ -4,31 +4,48 @@ import vivaldi.latency_filter;
 import vivaldi.node;
 
 /**
- * Runs a number of cycles using the provided notes and a matrix of
+ * Generates and zero-fills an NxN matrix.
+ */
+template matrix(size_t n) {
+    auto matrix() {
+        double[n][n] matrix;
+
+        // XXX: Is there a better way to zero-fill a matrix?
+        // memset(3)?
+        foreach (ref row; matrix) {
+            row[] = 0.0;
+        }
+
+        return matrix;
+    }
+}
+
+/**
+ * Runs a number of cycles using the provided nodes and a matrix of
  * true latencies among them.
  *
  * On each cycle, each node will choose a random peer and observe the
  * true round-trip time, updating its coordinate estimate.
  */
-void simulate(T, size_t window, size_t n)(return ref T[n] nodes, double[n][n]matrix, uint cycles) {
-    import mir.random;
-    import mir.random.variable;
-    import std.format;
+void simulate(T, size_t window, size_t n)(ref T[n] nodes, double[n][n] matrix, uint cycles)
+    @safe
+{
 
-    Random gen = Random(1);
+    import std.format;
+    import std.random;
+
     auto filter = new LatencyFilter!(string, double, window);
 
     for (uint cycle = 0; cycle < cycles; cycle++) {
-        foreach (size_t i, _; nodes) {
-            auto rv = UniformVariable!size_t(0, n - 1);
-            auto j = rv(gen);
+        foreach (i, ref node; nodes) {
+            auto j = uniform(0, n);
 
             if (j != i) {
-                auto node = nodes[j];
+                auto peer = nodes[j];
                 auto str = format("node_%d", j);
                 const auto rtt = filter.push(str, matrix[i][j]);
 
-                nodes[i].update(&node, rtt);
+                node.update(&peer, rtt);
             }
         }
     }
@@ -54,7 +71,7 @@ struct Stats {
  * latencies, returning the maximum and mean error between the
  * simulated results and the truth.
  */
-Stats* evaluate(T, size_t n)(T[n] nodes, double[n][n]matrix) {
+Stats* evaluate(T, size_t n)(T[n] nodes, double[n][n]matrix) nothrow @safe {
     import std.algorithm : max;
     import std.math : abs;
 
