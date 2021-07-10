@@ -28,7 +28,7 @@ void simulate(T, size_t window, size_t n)(return ref T[n] nodes, double[n][n]mat
                 auto str = format("node_%d", j);
                 const auto rtt = filter.push(str, matrix[i][j]);
 
-                nodes[j].update(&node, rtt);
+                nodes[i].update(&node, rtt);
             }
         }
     }
