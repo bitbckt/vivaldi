@@ -2,10 +2,6 @@ module vivaldi.node;
 
 import vivaldi.coordinate;
 
-import core.time;
-
-private static enum NanosPerSecond = 1.0e9;
-
 /**
  * A node is a point in the coordinate system with an estimated
  * position.
@@ -28,7 +24,7 @@ struct Node(T, size_t window = 0)
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      */
-    void update(const Node* other, const Duration rtt) nothrow @safe @nogc {
+    void update(const Node* other, double rtt) nothrow @safe @nogc {
         coordinate.update(&other.coordinate, rtt);
 
         static if (window > 0) {
@@ -37,7 +33,7 @@ struct Node(T, size_t window = 0)
             // NOTE: Rather than choosing landmarks as described in
             // "On Suitability", sample all nodes. In a passive
             // system, this is feasible.
-            samples[index] = (rtt - dist).total!"nsecs" / NanosPerSecond;
+            samples[index] = rtt - dist;
             index = (index + 1) % window;
 
             double sum = 0.0;
@@ -53,16 +49,16 @@ struct Node(T, size_t window = 0)
     /**
      * Returns the distance to `other` in estimated round-trip time.
      */
-    Duration distanceTo(const Node* other) nothrow @safe @nogc {
+    double distanceTo(const Node* other) nothrow @safe @nogc {
         auto dist = coordinate.distanceTo(&other.coordinate);
 
         static if (window > 0) {
             // NB. adjustment is in seconds
             const double adj = adjustment + other.adjustment;
 
-            const auto adjusted = dist + nsecs(cast(long)(adj * NanosPerSecond));
+            const auto adjusted = dist + adj;
 
-            if (adjusted.total!"nsecs" > 0) {
+            if (adjusted > 0) {
                 dist = adjusted;
             }
         }
@@ -87,17 +83,36 @@ nothrow @safe @nogc unittest {
     auto a = Node!C4();
     auto b = Node!C4();
 
-    a.update(&b, msecs(200));
-    assert(a.distanceTo(&b) > msecs(0));
+    a.update(&b, 0.2);
+    assert(a.distanceTo(&b) > 0);
 }
 
 @("adjustment")
 nothrow @safe @nogc unittest {
-    alias C4 = Coordinate!4;
+    version (DigitalMars) {
+        import std.math : isClose;
+    } else version (LDC) {
+        import std.math : approxEqual;
+        alias isClose = approxEqual;
+    }
 
-    auto a = Node!(C4, 10)();
-    auto b = Node!(C4, 10)();
+    alias C3 = Coordinate!(3, 1.5, 0);
 
-    a.update(&b, msecs(200));
-    assert(a.distanceTo(&b) > a.coordinate.distanceTo(&b.coordinate));
+    auto a = Node!(C3, 20)();
+    auto b = Node!(C3, 20)();
+
+    a.coordinate.vector = [ -0.5, 1.3, 2.4 ];
+    b.coordinate.vector = [ 1.2, -2.3, 3.4 ];
+
+    assert(a.distanceTo(&a) == 0);
+    assert(a.distanceTo(&b) == b.distanceTo(&a));
+    assert(isClose(a.distanceTo(&b), 4.104875150354758));
+
+    a.adjustment = -1.0e6;
+    assert(isClose(a.distanceTo(&b), 4.104875150354758));
+
+    a.adjustment = 0.1;
+    b.adjustment = 0.2;
+
+    assert(isClose(a.distanceTo(&b), 4.104875150354758 + 0.3));
 }

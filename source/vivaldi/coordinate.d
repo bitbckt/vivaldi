@@ -1,14 +1,10 @@
 module vivaldi.coordinate;
 
-import core.time;
-
 debug(vivaldi) {
     import std.experimental.logger : tracef;
 }
 
 private static enum ZeroThreshold = 1.0e-6;
-
-private static enum NanosPerSecond = 1.0e9;
 
 /**
  * Coordinate represents a point in a Vivaldi network coordinate
@@ -53,21 +49,20 @@ struct Coordinate(size_t dims,
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      */
-    void update(const Coordinate* other, const Duration rtt)
+    void update(const Coordinate* other, double rtt)
          nothrow @safe @nogc {
 
         import std.algorithm : min;
         import std.math : abs, pow;
 
-        const double dist = distanceTo(other).total!"nsecs";
-        double nanos = rtt.total!"nsecs";
+        const double dist = distanceTo(other);
 
-        if (nanos < ZeroThreshold) {
-            nanos = ZeroThreshold;
+        if (rtt < ZeroThreshold) {
+            rtt = ZeroThreshold;
         }
 
         // This term is the relative error of this sample.
-        const double err = abs(dist - nanos) / nanos;
+        const double err = abs(dist - rtt) / rtt;
 
         double total = error + other.error;
 
@@ -84,7 +79,7 @@ struct Coordinate(size_t dims,
         const double delta = cc * weight;
 
         // NB. force is in seconds
-        double force = delta * (nanos - dist) / NanosPerSecond;
+        double force = delta * (rtt - dist);
 
         debug(vivaldi) {
             tracef("applying force %f from %s to %s due to RTT %s",
@@ -97,18 +92,18 @@ struct Coordinate(size_t dims,
         // Apply the force exerted by the other node.
         applyForce(other, force);
 
+        scope Coordinate origin = typeof(this)();
+
         // Gravity toward the origin exerts a pulling force which is a
         // small fraction of the expected diameter of the network.
         // "Network Coordinates in the Wild", Sec. 7.2
-        force = -1.0 * pow((magnitude(vector) + height + minHeight) / rho, 2.0);
+        force = -1.0 * pow(distanceTo(&origin) / rho, 2.0);
 
         debug(vivaldi) {
             tracef("applying force %f to %s due to gravity",
                    force,
                    this);
         }
-
-        scope Coordinate origin = typeof(this)();
 
         // Apply the force of gravity exerted by the origin.
         applyForce(&origin, force);
@@ -117,18 +112,13 @@ struct Coordinate(size_t dims,
     /**
      * Returns the distance to `other` in estimated round-trip time.
      */
-    Duration distanceTo(const Coordinate* other) const pure nothrow @safe @nogc {
+    double distanceTo(const Coordinate* other) const pure nothrow @safe @nogc {
         double[dims] diff = vector[] - other.vector[];
-
-        // NB. height and magnitude are in seconds.
-        const double dist = magnitude(diff) + height + other.height;
-
-        return nsecs(cast(long)(dist * NanosPerSecond));
+        return magnitude(diff) + height + other.height;
     }
 
-private:
-
     invariant {
+        ///
         static bool valid(double d) pure nothrow @safe @nogc {
             import std.math : isInfinity, isNaN;
             return !isInfinity(d) && !isNaN(d);
@@ -170,7 +160,7 @@ private:
      * away from other. If negative, this coordinate will be pulled
      * closer to other.
      */
-    void applyForce(scope const Coordinate* other,
+    private void applyForce(scope const Coordinate* other,
                     double force) nothrow @safe @nogc {
         import std.algorithm : max;
 
@@ -206,8 +196,7 @@ nothrow @safe @nogc unittest {
     auto other = Coordinate!4();
     other.vector[2] = 0.001;
 
-    Duration rtt = msecs(200);
-    c.update(&other, rtt);
+    c.update(&other, 0.2);
 
     // The coordinate should be pushed away along the correct axis.
     assert(c.vector[0] == 0.0);
@@ -221,11 +210,10 @@ nothrow @safe @nogc unittest {
     auto c = Coordinate!4();
     auto other = Coordinate!4();
 
-    Duration rtt = nsecs(0);
-    c.update(&other, rtt);
+    c.update(&other, 0);
 
     // A zero RTT pushes away regardless.
-    assert(c.distanceTo(&other) > nsecs(0));
+    assert(c.distanceTo(&other) > 0);
 
     // The error term should not blow out.
     assert(c.error == 1.5);
@@ -241,28 +229,34 @@ unittest {
     c.error = 0;
     other.error = 0;
 
-    Duration rtt = msecs(100);
-    c.update(&other, rtt);
+    c.update(&other, 0.1);
 
     assert(c.error == 0);
-    assert(c.distanceTo(&other) > nsecs(0));
+    assert(c.distanceTo(&other) > 0);
 }
 
 @("distanceTo")
 nothrow @safe @nogc unittest {
-    auto c1 = Coordinate!(4, 1.5, 0)();
-    c1.vector = [ -0.5, 1.3, 2.4, 0.0 ];
+    version (DigitalMars) {
+        import std.math : isClose;
+    } else version (LDC) {
+        import std.math : approxEqual;
+        alias isClose = approxEqual;
+    }
 
-    auto c2 = Coordinate!(4, 1.5, 0)();
-    c2.vector = [ 1.2, -2.3, 3.4, 0.0 ];
+    auto c1 = Coordinate!(3, 1.5, 0)();
+    c1.vector = [ -0.5, 1.3, 2.4 ];
 
-    assert(c1.distanceTo(&c1).total!"msecs" == 0);
-    assert(c1.distanceTo(&c2).total!"msecs" == c2.distanceTo(&c1).total!"msecs");
-    assert(c1.distanceTo(&c2).total!"msecs" == 4104);
+    auto c2 = Coordinate!(3, 1.5, 0)();
+    c2.vector = [ 1.2, -2.3, 3.4 ];
+
+    assert(c1.distanceTo(&c1) == 0);
+    assert(c1.distanceTo(&c2) == c2.distanceTo(&c1));
+    assert(isClose(c1.distanceTo(&c2), 4.104875150354758));
 
     c1.height = 0.7;
     c2.height = 0.1;
-    assert(c1.distanceTo(&c2).total!"msecs" == 4104 + 800);
+    assert(isClose(c1.distanceTo(&c2), 4.104875150354758 + 0.8));
 }
 
 @("applyForce zero height")
@@ -274,23 +268,23 @@ nothrow @safe @nogc unittest {
         alias isClose = approxEqual;
     }
 
-    auto origin = Coordinate!(4, 1.5, 0)();
+    auto origin = Coordinate!(3, 1.5, 0)();
 
-    auto above = Coordinate!(4, 1.5, 0)();
-    above.vector = [ 0.0, 0.0, 2.9, 0.0 ];
+    auto above = Coordinate!(3, 1.5, 0)();
+    above.vector = [ 0.0, 0.0, 2.9 ];
 
     auto c = origin;
     c.applyForce(&above, 5.3);
-    assert(c.vector == [ 0.0, 0.0, -5.3, 0.0 ]);
+    assert(c.vector == [ 0.0, 0.0, -5.3 ]);
 
-    auto right = Coordinate!(4, 1.5, 0)();
-    right.vector = [ 3.4, 0.0, -5.3, 0.0 ];
+    auto right = Coordinate!(3, 1.5, 0)();
+    right.vector = [ 3.4, 0.0, -5.3 ];
     c.applyForce(&right, 2.0);
-    assert(c.vector == [ -2.0, 0.0, -5.3, 0.0 ]);
+    assert(c.vector == [ -2.0, 0.0, -5.3 ]);
 
     c = origin;
     c.applyForce(&origin, 1.0);
-    assert(origin.distanceTo(&c) == seconds(1));
+    assert(origin.distanceTo(&c) == 1);
 }
 
 @("applyForce default height")
@@ -302,19 +296,19 @@ nothrow @safe @nogc unittest {
         alias isClose = approxEqual;
     }
 
-    auto origin = Coordinate!4();
+    auto origin = Coordinate!3();
     auto c = origin;
 
-    auto above = Coordinate!4();
-    above.vector = [ 0.0, 0.0, 2.9, 0.0 ];
+    auto above = Coordinate!3();
+    above.vector = [ 0.0, 0.0, 2.9 ];
 
     c.applyForce(&above, 5.3);
-    assert(c.vector == [ 0.0, 0.0, -5.3, 0.0 ]);
+    assert(c.vector == [ 0.0, 0.0, -5.3 ]);
     assert(isClose(c.height, (1.0e-5 + above.height) * 5.3 / 2.9 + 1.0e-5));
 
     c = origin;
     c.applyForce(&above, -5.3);
-    assert(c.vector == [ 0.0, 0.0, 5.3, 0.0 ]);
+    assert(c.vector == [ 0.0, 0.0, 5.3 ]);
     assert(isClose(c.height, 1.0e-5));
 }
 
@@ -405,18 +399,17 @@ nothrow @safe @nogc unittest {
 
     assert(!__traits(compiles, unitvector([])));
 
-    double[4] a = [ 1.0, 2.0, 3.0, 4.0 ];
-    double[4] b = [ 0.5, 0.6, 0.7, 0.8 ];
+    double[3] a = [ 1.0, 2.0, 3.0 ];
+    double[3] b = [ 0.5, 0.6, 0.7 ];
 
-    double[4] result;
+    double[3] result;
 
     unitvector(a, b, result);
     assert(isClose(magnitude(result), 1.0));
 
-    double[4] expected = [0.118711610421,
-                         0.332392509178,
-                         0.546073407936,
-                         0.759754306693];
+    double[3] expected = [0.18257418583505536,
+                          0.511207720338155,
+                          0.8398412548412546];
 
     foreach (int i, double v; result) {
         assert(isClose(v, expected[i]));
