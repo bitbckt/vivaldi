@@ -57,19 +57,25 @@ struct Coordinate(size_t dims,
         import std.algorithm : min;
         import std.math : abs, pow;
 
-        double dist = distanceTo(other);
-        const double adj = dist + adjustment;
+        double adjustedDistance(const Coordinate *other) {
+            const dist = distanceTo(other);
+            const adj = dist + adjustment;
 
-        if (adj > 0.0) {
-            dist = adj;
+            if (adj > 0.0) {
+                return adj;
+            } else {
+                return dist;
+            }
         }
+
+        double dist = adjustedDistance(other);
 
         if (rtt < ZeroThreshold) {
             rtt = ZeroThreshold;
         }
 
         // This term is the relative error of this sample.
-        const double err = abs(dist - rtt) / rtt;
+        const err = abs(dist - rtt) / rtt;
 
         double total = error + other.error;
 
@@ -79,11 +85,11 @@ struct Coordinate(size_t dims,
 
         // Weight is used to push in proportion to the error: large
         // error -> large force.
-        const double weight = error / total;
+        const weight = error / total;
 
         error = min(err * ce * weight + error * (1.0 - ce * weight), maxError);
 
-        const double delta = cc * weight;
+        const delta = cc * weight;
 
         double force = delta * (rtt - dist);
 
@@ -100,10 +106,12 @@ struct Coordinate(size_t dims,
 
         scope origin = Coordinate();
 
+        dist = adjustedDistance(&origin);
+
         // Gravity toward the origin exerts a pulling force which is a
         // small fraction of the expected diameter of the network.
         // "Network Coordinates in the Wild", Sec. 7.2
-        force = -1.0 * pow(distanceTo(&origin) / rho, 2.0);
+        force = -1.0 * pow(dist / rho, 2.0);
 
         debug(vivaldi) {
             tracef("applying force %f to %s due to gravity",

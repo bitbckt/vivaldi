@@ -27,7 +27,7 @@ struct Node(T, size_t window = 0)
     void update(const Node* other, const double rtt) nothrow @safe @nogc {
         static if (window > 0) {
             coordinate.update(&other.coordinate, rtt, adjustment + other.adjustment);
-            const auto dist = coordinate.distanceTo(&other.coordinate);
+            const dist = coordinate.distanceTo(&other.coordinate);
 
             // NOTE: Rather than choosing landmarks as described in
             // "On Suitability", sample all nodes. In a passive
@@ -54,10 +54,8 @@ struct Node(T, size_t window = 0)
         auto dist = coordinate.distanceTo(&other.coordinate);
 
         static if (window > 0) {
-            // NB. adjustment is in seconds
-            const double adj = adjustment + other.adjustment;
-
-            const auto adjusted = dist + adj;
+            const adj = adjustment + other.adjustment;
+            const adjusted = dist + adj;
 
             if (adjusted > 0) {
                 dist = adjusted;
@@ -67,6 +65,9 @@ struct Node(T, size_t window = 0)
         return dist;
     }
 
+    /**
+     * The Vivaldi coordinate of this Node.
+     */
     T coordinate;
 
 private:
