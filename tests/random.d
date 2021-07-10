@@ -17,12 +17,12 @@ template random(size_t n, double mean, double stddev) {
 
     auto random() {
         Random gen = Random(1);
-        auto rv = NormalVariable!double(0, 1);
+        auto rv = NormalVariable!double(mean, stddev);
         auto matrix = new double[n][n];
 
         for (size_t i = 0; i < n; i++) {
             for (size_t j = i + 1; j < n; j++) {
-                const double rtt = rv(gen) * stddev + mean;
+                const double rtt = rv(gen);
 
                 matrix[i][j] = rtt;
                 matrix[j][i] = rtt;
