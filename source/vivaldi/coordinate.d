@@ -377,7 +377,9 @@ private double unitvector(size_t D)(const double[D] dest,
     //
     // cf. "Two nodes occupying the same location will have a spring
     // pushing them away from each other in some arbitrary direction."
-    ret[] *= uniform01() - 0.5;
+    foreach (ref n; ret) {
+        n = uniform01() - 0.5;
+    }
 
     mag = magnitude(ret);
     if (mag > ZeroThreshold) {
