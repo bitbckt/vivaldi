@@ -6,6 +6,10 @@ import vivaldi.node;
 
 private static enum NanosPerSecond = 1.0e9;
 
+/**
+ * Generates an NxN matrix of latencies using a randomized normal
+ * distribution.
+ */
 template random(size_t n, double mean, double stddev) {
 
     import mir.random;
@@ -18,7 +22,7 @@ template random(size_t n, double mean, double stddev) {
 
         for (size_t i = 0; i < n; i++) {
             for (size_t j = i + 1; j < n; j++) {
-                double rtt = rv(gen) * stddev + mean;
+                const double rtt = rv(gen) * stddev + mean;
 
                 matrix[i][j] = rtt;
                 matrix[j][i] = rtt;
