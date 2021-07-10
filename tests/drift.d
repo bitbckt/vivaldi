@@ -1,8 +1,7 @@
 module tests.drift;
 
 import tests.utils;
-import vivaldi.coordinate;
-import vivaldi.node;
+import vivaldi;
 
 @("drift")
 unittest {

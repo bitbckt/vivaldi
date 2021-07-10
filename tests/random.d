@@ -1,8 +1,7 @@
 module tests.random;
 
 import tests.utils;
-import vivaldi.coordinate;
-import vivaldi.node;
+import vivaldi;
 
 /**
  * Generates an NxN matrix of latencies using a randomized normal

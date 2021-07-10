@@ -1,7 +1,6 @@
 module tests.utils;
 
-import vivaldi.latency_filter;
-import vivaldi.node;
+import vivaldi;
 
 /**
  * Generates and zero-fills an NxN matrix.
