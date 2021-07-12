@@ -42,50 +42,37 @@ struct Coordinate(size_t dims,
                   double ce = 0.25,
                   double cc = 0.25,
                   double rho = 150.0)
-     if (dims > 0 && ce < 1.0 && cc < 1.0)
+     if (dims > 0 && ce < 1.0 && cc < 1.0 && rho > 0.0)
 {
 
     /**
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      *
-     * The adjustment parameter is used for hybrid coordinates. See Node.
+     * The adjustment parameters are used for hybrid coordinates. See
+     * Node.
      */
-    void update(const Coordinate* other, double rtt, double adjustment = 0.0)
+    void update(const Coordinate* other,
+                double rtt,
+                double localAdjustment = 0.0,
+                double remoteAdjustment = 0.0)
          nothrow @safe @nogc {
 
-        import std.algorithm : min;
+        import std.algorithm : max, min;
         import std.math : abs, pow;
 
-        double adjustedDistance(const Coordinate *other) {
-            const dist = distanceTo(other);
-            const adj = dist + adjustment;
+        double dist = distanceTo(other);
+        dist = max(dist, dist + localAdjustment + remoteAdjustment);
 
-            if (adj > 0.0) {
-                return adj;
-            } else {
-                return dist;
-            }
-        }
-
-        double dist = adjustedDistance(other);
-
-        if (rtt < ZeroThreshold) {
-            rtt = ZeroThreshold;
-        }
+        // Protect against div-by-zero.
+        rtt = max(rtt, ZeroThreshold);
 
         // This term is the relative error of this sample.
         const err = abs(dist - rtt) / rtt;
 
-        double total = error + other.error;
-
-        if (total < ZeroThreshold) {
-            total = ZeroThreshold;
-        }
-
         // Weight is used to push in proportion to the error: large
         // error -> large force.
-        const weight = error / total;
+        const weight = error / max(error + other.error, ZeroThreshold);
 
         error = min(err * ce * weight + error * (1.0 - ce * weight), maxError);
 
@@ -93,38 +80,27 @@ struct Coordinate(size_t dims,
 
         double force = delta * (rtt - dist);
 
-        debug(vivaldi) {
-            tracef("applying force %f from %s to %s due to RTT %s",
-                   force,
-                   *other,
-                   this,
-                   rtt);
-        }
-
         // Apply the force exerted by the other node.
         applyForce(other, force);
 
         scope origin = Coordinate();
 
-        dist = adjustedDistance(&origin);
+        dist = distanceTo(&origin);
+        dist = max(dist, dist + localAdjustment);
 
         // Gravity toward the origin exerts a pulling force which is a
         // small fraction of the expected diameter of the network.
         // "Network Coordinates in the Wild", Sec. 7.2
         force = -1.0 * pow(dist / rho, 2.0);
 
-        debug(vivaldi) {
-            tracef("applying force %f to %s due to gravity",
-                   force,
-                   this);
-        }
-
         // Apply the force of gravity exerted by the origin.
         applyForce(&origin, force);
     }
 
     /**
-     * Returns the distance to `other` in estimated round-trip time.
+     * Returns the Vivaldi distance to `other` in estimated round-trip time.
+     *
+     * To include adjustments in a hybrid coordinate system, see Node.
      */
     double distanceTo(const Coordinate* other) const pure nothrow @safe @nogc {
         double[dims] diff = vector[] - other.vector[];
@@ -174,14 +150,15 @@ struct Coordinate(size_t dims,
      * away from other. If negative, this coordinate will be pulled
      * closer to other.
      */
-    private void applyForce(scope const Coordinate* other, double force)
+    private void applyForce(scope const Coordinate* other, const double force)
          nothrow @safe @nogc {
         import std.algorithm : max;
 
         double[dims] unit;
-        const double mag = unitvector(vector, other.vector, unit);
+        const mag = unitvector(vector, other.vector, unit);
 
-        vector[] += unit[] * force;
+        unit[] *= force;
+        vector[] += unit[];
 
         if (mag > ZeroThreshold) {
             height = max((height + other.height) * force / mag + height, minHeight);

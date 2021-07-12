@@ -37,12 +37,12 @@ void simulate(T, size_t window, size_t n)(ref T[n] nodes, double[n][n] matrix, u
 
     for (uint cycle = 0; cycle < cycles; cycle++) {
         foreach (i, ref node; nodes) {
-            auto j = uniform(0, n);
+            const j = uniform(0, n);
 
             if (j != i) {
-                auto peer = nodes[j];
-                auto str = format("node_%d", j);
-                const auto rtt = filter.push(str, matrix[i][j]);
+                const peer = nodes[j];
+                const str = format("node_%d", j);
+                const rtt = filter.push(str, matrix[i][j]);
 
                 node.update(&peer, rtt);
             }

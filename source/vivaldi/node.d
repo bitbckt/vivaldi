@@ -26,7 +26,7 @@ struct Node(T, size_t window = 0)
      */
     void update(const Node* other, const double rtt) nothrow @safe @nogc {
         static if (window > 0) {
-            coordinate.update(&other.coordinate, rtt, adjustment + other.adjustment);
+            coordinate.update(&other.coordinate, rtt, adjustment, other.adjustment);
             const dist = coordinate.distanceTo(&other.coordinate);
 
             // NOTE: Rather than choosing landmarks as described in
