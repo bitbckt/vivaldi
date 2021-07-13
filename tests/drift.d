@@ -5,7 +5,7 @@ import vivaldi;
 
 @("drift")
 unittest {
-    import std.algorithm : max, min;
+    import std.algorithm : map, max, min, sum;
     import std.format;
     import std.math;
     import std.random;
@@ -69,13 +69,7 @@ unittest {
             mid[i] = mini.vector[i] + (maxi.vector[i] - mini.vector[i]) / 2;
         }
 
-        double sum = 0.0;
-
-        foreach (i; mid) {
-            sum += i * i;
-        }
-
-        return sqrt(sum);
+        return sqrt(sum(mid.map!(a => a * a)));
     }
 
     simulate!(N, 3, n)(nodes, matrix, 1000);

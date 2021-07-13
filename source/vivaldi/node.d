@@ -26,6 +26,8 @@ struct Node(T, size_t window = 0)
      */
     void update(const Node* other, const double rtt) nothrow @safe @nogc {
         static if (window > 0) {
+            import std.algorithm : sum;
+
             coordinate.update(&other.coordinate, rtt, adjustment, other.adjustment);
             const dist = coordinate.distanceTo(&other.coordinate);
 
@@ -35,13 +37,7 @@ struct Node(T, size_t window = 0)
             samples[index] = rtt - dist;
             index = (index + 1) % window;
 
-            double sum = 0.0;
-
-            foreach (i; samples) {
-                sum += i;
-            }
-
-            adjustment = sum / (2.0 * cast(double)window);
+            adjustment = sum(samples[]) / (2.0 * cast(double)window);
         } else {
             coordinate.update(&other.coordinate, rtt);
         }
@@ -54,12 +50,8 @@ struct Node(T, size_t window = 0)
         auto dist = coordinate.distanceTo(&other.coordinate);
 
         static if (window > 0) {
-            const adj = adjustment + other.adjustment;
-            const adjusted = dist + adj;
-
-            if (adjusted > 0) {
-                dist = adjusted;
-            }
+            import std.algorithm : max;
+            dist = max(dist, dist + adjustment + other.adjustment);
         }
 
         return dist;

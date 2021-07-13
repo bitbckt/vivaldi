@@ -310,19 +310,15 @@ nothrow @safe @nogc unittest {
 private double magnitude(size_t D)(const double[D] vec) pure nothrow @safe @nogc
      if (D > 0)
 {
+    import std.algorithm : map, sum;
+
     version (DigitalMars) {
         import std.math.algebraic : sqrt;
     } else version (LDC) {
         import std.math : sqrt;
     }
 
-    double sum = 0.0;
-
-    foreach (i; vec) {
-        sum += i * i;
-    }
-
-    return sqrt(sum);
+    return sqrt(sum(vec[].map!(a => a * a)));
 }
 
 @("magnitude")
