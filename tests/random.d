@@ -19,7 +19,7 @@ template random(size_t n, double mean, double stddev) {
 
         for (size_t i = 0; i < n; i++) {
             for (size_t j = i + 1; j < n; j++) {
-                const double rtt = rv(gen);
+                const rtt = rv(gen);
 
                 matrix[i][j] = rtt;
                 matrix[j][i] = rtt;
@@ -51,6 +51,6 @@ unittest {
     simulate!(N, 3, n)(nodes, matrix, cycles);
     auto stats = evaluate!(N, n)(nodes, matrix);
 
-    assert(stats.mean <= 0.077, format("mean=%s", stats.mean));
-    assert(stats.max <= 0.37, format("max=%s", stats.max));
+    assert(stats.mean <= 0.075, format("mean=%s", stats.mean));
+    assert(stats.max <= 0.33, format("max=%s", stats.max));
 }
