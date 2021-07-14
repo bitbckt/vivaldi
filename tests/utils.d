@@ -79,13 +79,13 @@ Stats* evaluate(T, size_t n)(T[n] nodes, double[n][n]matrix) nothrow @safe {
     import std.math : abs;
 
     auto stats = new Stats;
-    uint count = 0;
+    double count = 0;
 
     for (size_t i = 0; i < n; i++) {
         for (size_t j = i + 1; j < n; j++) {
-            const double est = nodes[i].distanceTo(&nodes[j]);
-            const double actual = matrix[i][j];
-            const double err = abs(est - actual) / actual;
+            const est = nodes[i].distanceTo(&nodes[j]);
+            const actual = matrix[i][j];
+            const err = abs(est - actual) / actual;
 
             stats.max = max(stats.max, err);
             stats.mean += err;
@@ -93,6 +93,6 @@ Stats* evaluate(T, size_t n)(T[n] nodes, double[n][n]matrix) nothrow @safe {
         }
     }
 
-    stats.mean /= cast(double)count;
+    stats.mean /= count;
     return stats;
 }
