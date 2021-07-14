@@ -1,7 +1,5 @@
 module vivaldi.coordinate;
 
-private static enum ZeroThreshold = 1.0e-6;
-
 /**
  * Coordinate represents a point in a Vivaldi network coordinate
  * system.
@@ -61,14 +59,14 @@ struct Coordinate(size_t dims,
         dist = max(dist, dist + localAdjustment + remoteAdjustment);
 
         // Protect against div-by-zero.
-        rtt = max(rtt, ZeroThreshold);
+        rtt = max(rtt, double.min_normal);
 
         // This term is the relative error of this sample.
         const err = abs(dist - rtt) / rtt;
 
         // Weight is used to push in proportion to the error: large
         // error -> large force.
-        const weight = error / max(error + other.error, ZeroThreshold);
+        const weight = error / max(error + other.error, double.min_normal);
 
         error = min(err * ce * weight + error * (1.0 - ce * weight), maxError);
 
@@ -156,7 +154,7 @@ struct Coordinate(size_t dims,
         unit[] *= force;
         vector[] += unit[];
 
-        if (mag > ZeroThreshold) {
+        if (mag > double.min_normal) {
             height = max((height + other.height) * force / mag + height, minHeight);
         }
     }
@@ -348,7 +346,7 @@ private double unitvector(size_t D)(const double[D] dest,
 
     mag = magnitude(ret);
     // Push if the two vectors aren't too close.
-    if (mag > ZeroThreshold) {
+    if (mag > double.min_normal) {
         ret[] *= 1.0 / mag;
         return mag;
     }
@@ -362,7 +360,7 @@ private double unitvector(size_t D)(const double[D] dest,
     }
 
     mag = magnitude(ret);
-    if (mag > ZeroThreshold) {
+    if (mag > double.min_normal) {
         ret[] *= 1.0 / mag;
         return 0.0;
     }
