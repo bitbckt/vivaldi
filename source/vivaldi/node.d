@@ -17,6 +17,10 @@ import vivaldi.coordinate;
  *
  * See "On Suitability of Euclidean Embedding forHost-based Network
  * Coordinate System" by Lee et al.
+ *
+ * Params:
+ *      T = The type of an instantiation of Coordinate.
+ *      window = The number of samples used to compute each adjustment term.
  */
 struct Node(T, size_t window = 0)
 {
@@ -65,8 +69,20 @@ struct Node(T, size_t window = 0)
 private:
 
     static if (window > 0) {
+        /**
+         * The adjustment term in a hybrid coordinate system. See "On
+         * Suitability" Sec. VI-A.
+         */
         double adjustment = 0.0;
+
+        /**
+         * The insertion index for the next sample in the sample window.
+         */
         size_t index = 0;
+
+        /**
+         * Samples is a ringbuffer of error terms used to compute an adjustment.
+         */
         double[window] samples = 0.0;
     }
 }
