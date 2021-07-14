@@ -394,15 +394,14 @@ nothrow @safe @nogc unittest {
         auto mag = unitvector(a, b, result);
         assert(isClose(magnitude(result), 1.0));
 
-        double[3] diff;
-        diff = a[] - b[];
+        double[3] diff = a[] - b[];
         assert(isClose(mag, magnitude(diff)));
 
         double[3] expected = [0.18257418583505536,
                               0.511207720338155,
                               0.8398412548412546];
 
-        foreach (int i, double v; result) {
+        foreach (i, v; result) {
             assert(isClose(v, expected[i]));
         }
     }
