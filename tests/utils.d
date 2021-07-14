@@ -33,7 +33,9 @@ void simulate(T, size_t window, size_t n)(ref T[n] nodes, double[n][n] matrix, u
     import std.format;
     import std.random;
 
-    auto filter = new LatencyFilter!(string, double, window);
+    alias LF = LatencyFilter!(string, double, window);
+
+    LF*[string] filters;
 
     for (uint cycle = 0; cycle < cycles; cycle++) {
         foreach (i, ref node; nodes) {
@@ -42,6 +44,8 @@ void simulate(T, size_t window, size_t n)(ref T[n] nodes, double[n][n] matrix, u
             if (j != i) {
                 const peer = nodes[j];
                 const str = format("node_%d", j);
+
+                auto filter = filters.require(format("node_%d", i), new LF);
                 const rtt = filter.push(str, matrix[i][j]);
 
                 node.update(&peer, rtt);
