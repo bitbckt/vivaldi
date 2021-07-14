@@ -53,7 +53,9 @@ struct Coordinate(size_t dims,
          nothrow @safe @nogc {
 
         import std.algorithm : max, min;
-        import std.math : abs, pow;
+        import std.math : abs, isFinite, pow;
+
+        assert(isFinite(rtt));
 
         double dist = distanceTo(other);
         dist = max(dist, dist + localAdjustment + remoteAdjustment);
@@ -202,6 +204,19 @@ nothrow @safe @nogc unittest {
 
     // The error term should not blow out.
     assert(c.error == 1.5);
+}
+
+@("finite rtt")
+unittest {
+    import core.exception : AssertError;
+    import std.exception;
+
+    auto a = Coordinate!4();
+    auto b = Coordinate!4();
+
+    assertThrown!AssertError(a.update(&b, double.infinity));
+    assertThrown!AssertError(a.update(&b, -double.infinity));
+    assertThrown!AssertError(a.update(&b, double.nan));
 }
 
 @("zero error")
