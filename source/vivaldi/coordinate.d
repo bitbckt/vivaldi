@@ -5,10 +5,8 @@ import std.math : isFinite;
 /**
  * A helper for validating a double lies within [0.0, 1.0).
  */
-private template isValid01(double v) {
-    bool isValid01() {
-        return v >= 0.0 && v < 1.0;
-    }
+private bool isValid01(double v)() {
+    return v >= 0.0 && v < 1.0;
 }
 
 /**
