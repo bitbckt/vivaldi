@@ -29,13 +29,11 @@ template matrix(size_t n) {
 void simulate(T, size_t window, size_t n)(ref T[n] nodes, double[n][n] matrix, uint cycles)
     @safe
 {
-
-    import std.format;
     import std.random;
 
-    alias LF = LatencyFilter!(string, double, window);
+    alias LF = LatencyFilter!(size_t, double, window);
 
-    LF*[string] filters;
+    LF*[size_t] filters;
 
     for (uint cycle = 0; cycle < cycles; cycle++) {
         foreach (i, ref node; nodes) {
@@ -43,10 +41,9 @@ void simulate(T, size_t window, size_t n)(ref T[n] nodes, double[n][n] matrix, u
 
             if (j != i) {
                 const peer = nodes[j];
-                const str = format("node_%d", j);
 
-                auto filter = filters.require(format("node_%d", i), new LF);
-                const rtt = filter.push(str, matrix[i][j]);
+                auto filter = filters.require(i, new LF);
+                const rtt = filter.push(j, matrix[i][j]);
 
                 node.update(&peer, rtt);
             }
