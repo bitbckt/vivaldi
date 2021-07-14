@@ -78,5 +78,5 @@ unittest {
     simulate!(N, 3, n)(nodes, matrix, 10000);
 
     double err = centerError();
-    assert(err <= 0.8 * baseline, format("err=%s", err));
+    assert(err <= 0.81 * baseline, format("err=%s baseline=%s", err, baseline));
 }
