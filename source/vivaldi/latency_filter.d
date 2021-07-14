@@ -136,8 +136,12 @@ private struct Buffer(T, size_t window)
 
             // Shift the median on every other node. It will
             // eventually end up in the middle.
-            if ((i & 0x1) == 0x1 && !isNaN(buffer[cur].value)) {
+            if (i % 2 == 1) {
                 median = buffer[median].next;
+            }
+
+            if (isNaN(buffer[cur].value)) {
+                break;
             }
 
             cur = buffer[cur].next;
@@ -153,13 +157,6 @@ private struct Buffer(T, size_t window)
 
         if (updateHead) {
             head = cursor;
-            median = buffer[median].prev;
-        }
-
-        // If the window is a multiple of 2, shift the median backward
-        // such that it points to the smaller of the two median
-        // values.
-        static if (window % 2 == 0) {
             median = buffer[median].prev;
         }
 
@@ -231,7 +228,7 @@ nothrow @safe @nogc unittest {
 @("single peak 4")
 unittest {
     double[] input = [10, 20, 30, 100, 30, 20, 10];
-    double[] output = [10, 10, 20, 20, 30, 30, 20];
+    double[] output = [10, 20, 20, 30, 30, 30, 30];
 
     assert(compute!4(input) == output);
 }
@@ -239,7 +236,7 @@ unittest {
 @("single peak 5")
 unittest {
     double[] input = [10, 20, 30, 100, 30, 20, 10];
-    double[] output = [10, 10, 20, 20, 30, 30, 30];
+    double[] output = [10, 20, 20, 30, 30, 30, 30];
 
     assert(compute!5(input) == output);
 }
@@ -247,7 +244,7 @@ unittest {
 @("single valley 4")
 unittest {
     double[] input = [90, 80, 70, 10, 70, 80, 90];
-    double[] output = [90, 80, 80, 70, 70, 70, 70];
+    double[] output = [90, 90, 80, 80, 70, 70, 80];
 
     assert(compute!4(input) == output);
 }
@@ -255,7 +252,7 @@ unittest {
 @("single valley 5")
 unittest {
     double[] input = [90, 80, 70, 10, 70, 80, 90];
-    double[] output = [90, 80, 80, 70, 70, 70, 70];
+    double[] output = [90, 90, 80, 80, 70, 70, 70];
 
     assert(compute!5(input) == output);
 }
@@ -279,7 +276,7 @@ unittest {
 @("triple outlier 4")
 unittest {
     double[] input = [10, 10, 100, 100, 100, 10, 10];
-    double[] output = [10, 10, 10, 10, 100, 100, 10];
+    double[] output = [10, 10, 10, 100, 100, 100, 100];
 
     assert(compute!4(input) == output);
 }
@@ -287,7 +284,7 @@ unittest {
 @("triple outlier 5")
 unittest {
     double[] input = [10, 10, 100, 100, 100, 10, 10];
-    double[] output = [10, 10, 10, 10, 100, 100, 100];
+    double[] output = [10, 10, 10, 100, 100, 100, 100];
 
     assert(compute!5(input) == output);
 }
@@ -295,7 +292,7 @@ unittest {
 @("quintuple outlier 4")
 unittest {
     double[] input = [10, 100, 100, 100, 100, 100, 10];
-    double[] output = [10, 10, 100, 100, 100, 100, 100];
+    double[] output = [10, 100, 100, 100, 100, 100, 100];
 
     assert(compute!4(input) == output);
 }
@@ -303,7 +300,7 @@ unittest {
 @("quintuple outlier 5")
 unittest {
     double[] input = [10, 100, 100, 100, 100, 100, 10];
-    double[] output = [10, 10, 100, 100, 100, 100, 100];
+    double[] output = [10, 100, 100, 100, 100, 100, 100];
 
     assert(compute!5(input) == output);
 }
@@ -311,7 +308,7 @@ unittest {
 @("alternating 4")
 unittest {
     double[] input = [10, 20, 10, 20, 10, 20, 10];
-    double[] output = [10, 10, 10, 10, 10, 10, 10];
+    double[] output = [10, 20, 10, 20, 20, 20, 20];
 
     assert(compute!4(input) == output);
 }
@@ -319,7 +316,7 @@ unittest {
 @("alternating 5")
 unittest {
     double[] input = [10, 20, 10, 20, 10, 20, 10];
-    double[] output = [10, 10, 10, 10, 10, 20, 10];
+    double[] output = [10, 20, 10, 20, 10, 20, 10];
 
     assert(compute!5(input) == output);
 }
@@ -327,7 +324,7 @@ unittest {
 @("ascending 4")
 unittest {
     double[] input = [10, 20, 30, 40, 50, 60, 70];
-    double[] output = [10, 10, 20, 20, 30, 40, 50];
+    double[] output = [10, 20, 20, 30, 40, 50, 60];
 
     assert(compute!4(input) == output);
 }
@@ -335,7 +332,7 @@ unittest {
 @("ascending 5")
 unittest {
     double[] input = [10, 20, 30, 40, 50, 60, 70];
-    double[] output = [10, 10, 20, 20, 30, 40, 50];
+    double[] output = [10, 20, 20, 30, 30, 40, 50];
 
     assert(compute!5(input) == output);
 }
@@ -343,7 +340,7 @@ unittest {
 @("descending 4")
 unittest {
     double[] input = [70, 60, 50, 40, 30, 20, 10];
-    double[] output = [70, 60, 60, 50, 40, 30, 20];
+    double[] output = [70, 70, 60, 60, 50, 40, 30];
 
     assert(compute!4(input) == output);
 }
@@ -351,7 +348,7 @@ unittest {
 @("descending 5")
 unittest {
     double[] input = [70, 60, 50, 40, 30, 20, 10];
-    double[] output = [70, 60, 60, 50, 50, 40, 30];
+    double[] output = [70, 70, 60, 60, 50, 40, 30];
 
     assert(compute!5(input) == output);
 }
@@ -425,6 +422,7 @@ struct LatencyFilter(T, U, size_t window)
     }
 
 private:
+
     B*[T] data;
 }
 
@@ -441,7 +439,7 @@ unittest {
         output ~= filter.push("10.0.0.1", i);
     }
 
-    assert(output == [3, 2, 3, 3, 4, 4]);
+    assert(output == [3, 3, 3, 4, 4, 4]);
     assert(filter.get("10.0.0.1") == 4);
 
     filter.push("10.0.0.2", 100);
