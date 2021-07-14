@@ -1,9 +1,5 @@
 module vivaldi.coordinate;
 
-debug(vivaldi) {
-    import std.experimental.logger : tracef;
-}
-
 private static enum ZeroThreshold = 1.0e-6;
 
 /**
