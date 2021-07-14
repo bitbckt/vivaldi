@@ -135,11 +135,15 @@ private struct Buffer(T, size_t window)
             }
 
             // Shift the median on every other node. It will
-            // eventually end up in the middle.
+            // eventually end up in the middle. This is similar to
+            // Floyd's "tortoise and hare" cycle detection
+            // algorithm. Here, i is the hare, and the median pointer
+            // is the tortoise.
             if (i % 2 == 1) {
                 median = buffer[median].next;
             }
 
+            // Break once an unallocated node has been reached.
             if (isNaN(buffer[cur].value)) {
                 break;
             }
@@ -157,6 +161,8 @@ private struct Buffer(T, size_t window)
 
         if (updateHead) {
             head = cursor;
+            // Move the median pointer back if a new minimum was
+            // inserted.
             median = buffer[median].prev;
         }
 
