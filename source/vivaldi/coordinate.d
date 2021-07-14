@@ -1,5 +1,16 @@
 module vivaldi.coordinate;
 
+import std.math : isFinite;
+
+/**
+ * A helper for validating a double lies within [0.0, 1.0).
+ */
+private template isValid01(double v) {
+    bool isValid01() {
+        return v >= 0.0 && v < 1.0;
+    }
+}
+
 /**
  * Coordinate represents a point in a Vivaldi network coordinate
  * system.
@@ -36,7 +47,7 @@ struct Coordinate(size_t dims,
                   double ce = 0.25,
                   double cc = 0.25,
                   double rho = 150.0)
-     if (dims > 0 && ce < 1.0 && cc < 1.0 && rho > 0.0)
+     if (dims > 0 && isValid01!ce && isValid01!cc && isFinite(rho) && rho > 0.0)
 {
 
     /**
@@ -53,7 +64,7 @@ struct Coordinate(size_t dims,
          nothrow @safe @nogc {
 
         import std.algorithm : max, min;
-        import std.math : abs, isFinite, pow;
+        import std.math : abs, pow;
 
         assert(isFinite(rtt));
 
@@ -190,6 +201,25 @@ nothrow @safe @nogc unittest {
     assert(c.vector[1] == 0.0);
     assert(c.vector[2] < 0.0);
     assert(c.vector[3] == 0.0);
+}
+
+@("constant factors")
+unittest {
+    // Vivaldi ce term
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.0 - double.epsilon)));
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 1.0 + double.epsilon)));
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, double.nan)));
+
+    // Vivaldi cc term
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.25, 0.0 - double.epsilon)));
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.25, 1.0 + double.epsilon)));
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.25, double.nan)));
+
+    // Gravitational constant
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.25, 0.25, 0.0)));
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.25, 0.25, 0.0 - double.epsilon)));
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.25, 0.25, double.nan)));
+    assert(!__traits(compiles, Coordinate!(4, 1.5, 1.0e-5, 0.25, 0.25, double.infinity)));
 }
 
 @("zero rtt")
