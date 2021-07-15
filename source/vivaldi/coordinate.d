@@ -57,8 +57,8 @@ struct Coordinate(size_t dims,
      */
     void update(const ref Coordinate other,
                 double rtt,
-                double localAdjustment = 0.0,
-                double remoteAdjustment = 0.0)
+                const double localAdjustment = 0.0,
+                const double remoteAdjustment = 0.0)
          nothrow @safe @nogc {
 
         import std.algorithm : max, min;
@@ -114,7 +114,7 @@ struct Coordinate(size_t dims,
 
     invariant {
         ///
-        static bool valid(double d) pure nothrow @safe @nogc {
+        static bool valid(const double d) pure nothrow @safe @nogc {
             import std.math : isInfinity, isNaN;
             return !isInfinity(d) && !isNaN(d);
         }

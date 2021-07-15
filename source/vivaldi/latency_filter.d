@@ -63,7 +63,7 @@ private struct Buffer(T, size_t window)
      * Returns the minimum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T min() pure nothrow @safe @nogc {
+    T min() const pure nothrow @safe @nogc {
         return buffer[head].value;
     }
 
@@ -71,10 +71,10 @@ private struct Buffer(T, size_t window)
      * Returns the maximum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T max() pure nothrow @safe @nogc {
+    T max() const pure nothrow @safe @nogc {
         import std.math : isNaN;
 
-        auto cur = buffer[head].next;
+        size_t cur = buffer[head].next;
 
         while (!isNaN(buffer[cur].value) && cur != head) {
             cur = buffer[cur].next;
@@ -90,7 +90,7 @@ private struct Buffer(T, size_t window)
      *
      * Returns the median after the datum has been pushed.
      */
-    T push(T datum) nothrow @safe @nogc {
+    T push(const T datum) pure nothrow @safe @nogc {
         import std.math : isNaN;
 
         // If the current head will be overwritten, move it to the
@@ -172,7 +172,7 @@ private struct Buffer(T, size_t window)
         return buffer[median].value;
     }
 
-    void insert(T datum, size_t index) nothrow @safe @nogc {
+    void insert(const T datum, const size_t index) pure nothrow @safe @nogc {
         const auto succ = index;
         const auto pred = buffer[index].prev;
 
@@ -384,7 +384,7 @@ struct LatencyFilter(T, U, size_t window)
      * Pushes a new latency datum into the filter window for a node,
      * and returns the current median value from the filter.
      */
-    U push(T node, U rtt) @safe {
+    U push(const T node, const U rtt) @safe {
         import std.algorithm : sort;
         import std.math : isNaN;
 
@@ -399,8 +399,8 @@ struct LatencyFilter(T, U, size_t window)
      * Returns the current median latency for a node. If no data has
      * been recorded for the node, returns NaN.
      */
-    U get(T node) nothrow @safe @nogc {
-        B** p = node in data;
+    U get(const T node) const pure nothrow @safe @nogc {
+        const(B*)* p = node in data;
 
         if (p is null) {
             return U.nan;
@@ -416,7 +416,7 @@ struct LatencyFilter(T, U, size_t window)
     /**
      * Discards data collected for a node.
      */
-    void discard(T node) nothrow @safe @nogc {
+    void discard(const T node) nothrow @safe @nogc {
         data.remove(node);
     }
 
