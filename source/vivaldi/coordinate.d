@@ -55,7 +55,7 @@ struct Coordinate(size_t dims,
      * The adjustment parameters are used for hybrid coordinates. See
      * Node.
      */
-    void update(const Coordinate* other,
+    void update(const ref Coordinate other,
                 double rtt,
                 double localAdjustment = 0.0,
                 double remoteAdjustment = 0.0)
@@ -90,7 +90,7 @@ struct Coordinate(size_t dims,
 
         scope origin = Coordinate();
 
-        dist = distanceTo(&origin);
+        dist = distanceTo(origin);
         dist = max(dist, dist + localAdjustment);
 
         // Gravity toward the origin exerts a pulling force which is a
@@ -99,7 +99,7 @@ struct Coordinate(size_t dims,
         force = -1.0 * pow(dist / rho, 2.0);
 
         // Apply the force of gravity exerted by the origin.
-        applyForce(&origin, force);
+        applyForce(origin, force);
     }
 
     /**
@@ -107,7 +107,7 @@ struct Coordinate(size_t dims,
      *
      * To include adjustments in a hybrid coordinate system, see Node.
      */
-    double distanceTo(const Coordinate* other) const pure nothrow @safe @nogc {
+    double distanceTo(const ref Coordinate other) const pure nothrow @safe @nogc {
         double[dims] diff = vector[] - other.vector[];
         return magnitude(diff) + height + other.height;
     }
@@ -155,7 +155,7 @@ struct Coordinate(size_t dims,
      * away from other. If negative, this coordinate will be pulled
      * closer to other.
      */
-    private void applyForce(scope const Coordinate* other, const double force)
+    private void applyForce(const ref Coordinate other, const double force)
          nothrow @safe @nogc {
         import std.algorithm : max;
 
@@ -192,7 +192,7 @@ nothrow @safe @nogc unittest {
     auto other = Coordinate!4();
     other.vector[2] = 0.001;
 
-    c.update(&other, 0.2);
+    c.update(other, 0.2);
 
     // The coordinate should be pushed away along the correct axis.
     assert(c.vector[0] == 0.0);
@@ -225,10 +225,10 @@ nothrow @safe @nogc unittest {
     auto c = Coordinate!4();
     auto other = Coordinate!4();
 
-    c.update(&other, 0);
+    c.update(other, 0);
 
     // A zero RTT pushes away regardless.
-    assert(c.distanceTo(&other) > 0);
+    assert(c.distanceTo(other) > 0);
 
     // The error term should not blow out.
     assert(c.error == 1.5);
@@ -242,9 +242,9 @@ unittest {
     auto a = Coordinate!4();
     auto b = Coordinate!4();
 
-    assertThrown!AssertError(a.update(&b, double.infinity));
-    assertThrown!AssertError(a.update(&b, -double.infinity));
-    assertThrown!AssertError(a.update(&b, double.nan));
+    assertThrown!AssertError(a.update(b, double.infinity));
+    assertThrown!AssertError(a.update(b, -double.infinity));
+    assertThrown!AssertError(a.update(b, double.nan));
 }
 
 @("zero error")
@@ -257,10 +257,10 @@ unittest {
     c.error = 0;
     other.error = 0;
 
-    c.update(&other, 0.1);
+    c.update(other, 0.1);
 
     assert(c.error == 0);
-    assert(c.distanceTo(&other) > 0);
+    assert(c.distanceTo(other) > 0);
 }
 
 @("distanceTo")
@@ -278,13 +278,13 @@ nothrow @safe @nogc unittest {
     auto c2 = Coordinate!(3, 1.5, 0)();
     c2.vector = [ 1.2, -2.3, 3.4 ];
 
-    assert(c1.distanceTo(&c1) == 0);
-    assert(c1.distanceTo(&c2) == c2.distanceTo(&c1));
-    assert(isClose(c1.distanceTo(&c2), 4.104875150354758));
+    assert(c1.distanceTo(c1) == 0);
+    assert(c1.distanceTo(c2) == c2.distanceTo(c1));
+    assert(isClose(c1.distanceTo(c2), 4.104875150354758));
 
     c1.height = 0.7;
     c2.height = 0.1;
-    assert(isClose(c1.distanceTo(&c2), 4.104875150354758 + 0.8));
+    assert(isClose(c1.distanceTo(c2), 4.104875150354758 + 0.8));
 }
 
 @("applyForce zero height")
@@ -302,17 +302,17 @@ nothrow @safe @nogc unittest {
     above.vector = [ 0.0, 0.0, 2.9 ];
 
     auto c = origin;
-    c.applyForce(&above, 5.3);
+    c.applyForce(above, 5.3);
     assert(c.vector == [ 0.0, 0.0, -5.3 ]);
 
     auto right = Coordinate!(3, 1.5, 0)();
     right.vector = [ 3.4, 0.0, -5.3 ];
-    c.applyForce(&right, 2.0);
+    c.applyForce(right, 2.0);
     assert(c.vector == [ -2.0, 0.0, -5.3 ]);
 
     c = origin;
-    c.applyForce(&origin, 1.0);
-    assert(isClose(origin.distanceTo(&c), 1.0));
+    c.applyForce(origin, 1.0);
+    assert(isClose(origin.distanceTo(c), 1.0));
 }
 
 @("applyForce default height")
@@ -333,12 +333,12 @@ nothrow @safe @nogc unittest {
     above.vector = [ 0.0, 0.0, 2.9 ];
     above.height = 0.0;
 
-    c.applyForce(&above, 5.3);
+    c.applyForce(above, 5.3);
     assert(c.vector == [ 0.0, 0.0, -5.3 ]);
     assert(isClose(c.height, 1.0e-5 + 5.3 * 1.0e-5 / 2.9));
 
     c = origin;
-    c.applyForce(&above, -5.3);
+    c.applyForce(above, -5.3);
     assert(c.vector == [ 0.0, 0.0, 5.3 ]);
     assert(isClose(c.height, 1.0e-5));
 }

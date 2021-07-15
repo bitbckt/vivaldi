@@ -45,7 +45,7 @@ void simulate(T, size_t window, size_t n)(ref T[n] nodes, double[n][n] matrix, u
                 auto filter = filters.require(i, new LF);
                 const rtt = filter.push(j, matrix[i][j]);
 
-                node.update(&peer, rtt);
+                node.update(peer, rtt);
             }
         }
     }
@@ -80,7 +80,7 @@ Stats* evaluate(T, size_t n)(T[n] nodes, double[n][n]matrix) nothrow @safe {
 
     for (size_t i = 0; i < n; i++) {
         for (size_t j = i + 1; j < n; j++) {
-            const est = nodes[i].distanceTo(&nodes[j]);
+            const est = nodes[i].distanceTo(nodes[j]);
             const actual = matrix[i][j];
             const err = abs(est - actual) / actual;
 

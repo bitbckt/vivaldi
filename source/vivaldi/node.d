@@ -28,12 +28,12 @@ struct Node(T, size_t window = 0)
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      */
-    void update(const Node* other, const double rtt) nothrow @safe @nogc {
+    void update(const ref Node other, const double rtt) nothrow @safe @nogc {
         static if (window > 0) {
             import std.algorithm : sum;
 
-            coordinate.update(&other.coordinate, rtt, adjustment, other.adjustment);
-            const dist = coordinate.distanceTo(&other.coordinate);
+            coordinate.update(other.coordinate, rtt, adjustment, other.adjustment);
+            const dist = coordinate.distanceTo(other.coordinate);
 
             // NOTE: Rather than choosing landmarks as described in
             // "On Suitability", sample all nodes. In a passive
@@ -43,15 +43,15 @@ struct Node(T, size_t window = 0)
 
             adjustment = sum(samples[]) / (2.0 * cast(double)window);
         } else {
-            coordinate.update(&other.coordinate, rtt);
+            coordinate.update(other.coordinate, rtt);
         }
     }
 
     /**
      * Returns the distance to `other` in estimated round-trip time.
      */
-    double distanceTo(const Node* other) nothrow @safe @nogc {
-        auto dist = coordinate.distanceTo(&other.coordinate);
+    double distanceTo(const ref Node other) nothrow @safe @nogc {
+        auto dist = coordinate.distanceTo(other.coordinate);
 
         static if (window > 0) {
             import std.algorithm : max;
@@ -94,8 +94,8 @@ nothrow @safe @nogc unittest {
     auto a = Node!C4();
     auto b = Node!C4();
 
-    a.update(&b, 0.2);
-    assert(a.distanceTo(&b) > 0);
+    a.update(b, 0.2);
+    assert(a.distanceTo(b) > 0);
 }
 
 @("adjustment")
@@ -115,15 +115,15 @@ nothrow @safe @nogc unittest {
     a.coordinate.vector = [ -0.5, 1.3, 2.4 ];
     b.coordinate.vector = [ 1.2, -2.3, 3.4 ];
 
-    assert(a.distanceTo(&a) == 0);
-    assert(a.distanceTo(&b) == b.distanceTo(&a));
-    assert(isClose(a.distanceTo(&b), 4.104875150354758));
+    assert(a.distanceTo(a) == 0);
+    assert(a.distanceTo(b) == b.distanceTo(a));
+    assert(isClose(a.distanceTo(b), 4.104875150354758));
 
     a.adjustment = -1.0e6;
-    assert(isClose(a.distanceTo(&b), 4.104875150354758));
+    assert(isClose(a.distanceTo(b), 4.104875150354758));
 
     a.adjustment = 0.1;
     b.adjustment = 0.2;
 
-    assert(isClose(a.distanceTo(&b), 4.104875150354758 + 0.3));
+    assert(isClose(a.distanceTo(b), 4.104875150354758 + 0.3));
 }
