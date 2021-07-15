@@ -2,7 +2,7 @@ module vivaldi.latency_filter;
 
 import vivaldi.coordinate;
 
-import std.traits : isFloatingPoint;
+import std.traits;
 
 /**
  * A helper for constructing and properly initializing a Buffer.
@@ -360,6 +360,21 @@ unittest {
 }
 
 /**
+ * Tests whether a type K is suitable for use as a hash key, under the following
+ * constraints:
+ *   - is it a non-void scalar type?
+ *   - is it a string/char[]/wchar[]?
+ *   - is it a struct or class which implements size_t toHash and bool opEquals?
+ */
+private enum bool isHashKey(K) =
+    (!is(K : void) &&
+     isBasicType!(K)) ||
+    isNarrowString!(K) ||
+    (isAggregateType!(K) &&
+     is(ReturnType!((K k) => k.toHash) == size_t) &&
+     is(ReturnType!((K k) => k.opEquals(k)) == bool));
+
+/**
  * A latency filter tracks a stream of latency measurements involving
  * a remote node, and returns an expected latency value using a moving
  * median filter.
@@ -376,7 +391,7 @@ unittest {
  *      window = The size of the moving filter window.
  */
 struct LatencyFilter(T, U, size_t window)
-     if (isFloatingPoint!U && window > 0)
+     if (isHashKey!T && isFloatingPoint!U && window > 0)
 {
     private alias B = Buffer!(U, window);
 
@@ -399,7 +414,7 @@ struct LatencyFilter(T, U, size_t window)
      * Returns the current median latency for a node. If no data has
      * been recorded for the node, returns NaN.
      */
-    U get(const T node) const pure nothrow @safe @nogc {
+    U get(T node) const pure nothrow @safe @nogc {
         const(B*)* p = node in data;
 
         if (p is null) {
@@ -416,7 +431,7 @@ struct LatencyFilter(T, U, size_t window)
     /**
      * Discards data collected for a node.
      */
-    void discard(const T node) nothrow @safe @nogc {
+    void discard(T node) nothrow @safe @nogc {
         data.remove(node);
     }
 
@@ -432,7 +447,59 @@ private:
     B*[T] data;
 }
 
-@("latency filter")
+@("type parameters")
+unittest {
+    class A;
+    struct B;
+
+    class C {
+        override size_t toHash() nothrow {
+            return 42;
+        }
+
+        override bool opEquals(Object o) {
+            return false;
+        }
+    }
+
+    struct D {
+        size_t toHash() const @safe pure nothrow {
+            return 42;
+        }
+
+        bool opEquals(ref const D s) const @safe pure nothrow {
+            return false;
+        }
+    }
+
+    assert(!__traits(compiles, new LatencyFilter!(void, double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(int, double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(float, double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(char, double, 5)));
+
+    // A bit non-sensical, but sure.
+    assert(__traits(compiles, new LatencyFilter!(bool, double, 5)));
+
+    assert(__traits(compiles, new LatencyFilter!(string, double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(char[], double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(wchar[], double, 5)));
+    assert(!__traits(compiles, new LatencyFilter!(dchar[], double, 5)));
+
+    assert(!__traits(compiles, new LatencyFilter!(A, double, 5)));
+    assert(!__traits(compiles, new LatencyFilter!(B, double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(C, double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(D, double, 5)));
+
+    assert(!__traits(compiles, new LatencyFilter!(string, int, 5)));
+    assert(__traits(compiles, new LatencyFilter!(string, float, 5)));
+    assert(__traits(compiles, new LatencyFilter!(string, double, 5)));
+    assert(__traits(compiles, new LatencyFilter!(string, real, 5)));
+
+    assert(__traits(compiles, new LatencyFilter!(string, double, 1)));
+    assert(!__traits(compiles, new LatencyFilter!(string, double, 0)));
+}
+
+@("usage")
 unittest {
     import std.math : isNaN;
 
@@ -458,4 +525,28 @@ unittest {
     filter.clear();
     assert(isNaN(filter.get("10.0.0.1")));
     assert(isNaN(filter.get("10.0.0.2")));
+}
+
+@("push attributes")
+@safe unittest {
+    auto filter = new LatencyFilter!(string, double, 5);
+
+    filter.push("10.0.0.1", 42);
+}
+
+@("get/discard attributes")
+nothrow @safe @nogc unittest {
+    import std.math : isNaN;
+
+    auto filter = LatencyFilter!(string, double, 5)();
+
+    assert(isNaN(filter.get("10.0.0.1")));
+
+    filter.discard("10.0.0.1");
+}
+
+@("clear attributes")
+nothrow unittest {
+    auto filter = LatencyFilter!(string, double, 5)();
+    filter.clear();
 }
