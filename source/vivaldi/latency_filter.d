@@ -151,7 +151,7 @@ private struct Buffer(T, size_t window)
             cur = buffer[cur].next;
         }
 
-        auto hd = buffer[head].value;
+        const hd = buffer[head].value;
         auto updateHead = true;
 
         // Update the head if the new datum is the minimum value.
