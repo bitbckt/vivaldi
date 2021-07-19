@@ -414,7 +414,7 @@ struct LatencyFilter(T, U, size_t window)
      * Returns the current median latency for a node. If no data has
      * been recorded for the node, returns NaN.
      */
-    U get(T node) const pure nothrow @safe @nogc {
+    U get(const T node) const pure nothrow @safe @nogc {
         const(B*)* p = node in data;
 
         if (p is null) {
@@ -431,7 +431,7 @@ struct LatencyFilter(T, U, size_t window)
     /**
      * Discards data collected for a node.
      */
-    void discard(T node) nothrow @safe @nogc {
+    void discard(const T node) nothrow @safe @nogc {
         data.remove(node);
     }
 
@@ -444,7 +444,7 @@ struct LatencyFilter(T, U, size_t window)
 
 private:
 
-    B*[T] data;
+    B*[const(T)] data;
 }
 
 @("type parameters")
