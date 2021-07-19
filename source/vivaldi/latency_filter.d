@@ -101,8 +101,8 @@ private struct Buffer(T, size_t window)
 
         // Remove the node at cursor; it will be overwritten.
 
-        auto pred = buffer[cursor].prev;
-        auto succ = buffer[cursor].next;
+        const pred = buffer[cursor].prev;
+        const succ = buffer[cursor].next;
 
         buffer[pred].next = succ;
 
@@ -173,8 +173,8 @@ private struct Buffer(T, size_t window)
     }
 
     void insert(const T datum, const size_t index) pure nothrow @safe @nogc {
-        const auto succ = index;
-        const auto pred = buffer[index].prev;
+        const succ = index;
+        const pred = buffer[index].prev;
 
         static if (window > 1) {
             assert(index != cursor);
