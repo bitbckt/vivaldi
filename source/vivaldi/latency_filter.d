@@ -400,7 +400,6 @@ struct LatencyFilter(T, U, size_t window)
      * and returns the current median value from the filter.
      */
     U push(const T node, const U rtt) @safe {
-        import std.algorithm : sort;
         import std.math : isNaN;
 
         assert(!isNaN(rtt));
