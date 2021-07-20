@@ -22,7 +22,7 @@ import vivaldi.coordinate;
  *      T = The type of an instantiation of Coordinate.
  *      window = The number of samples used to compute each adjustment term.
  */
-struct Node(T, size_t window = 0)
+struct Node(T, ushort window = 0)
 {
     /**
      * Given a round-trip time observation for another node at
@@ -41,7 +41,7 @@ struct Node(T, size_t window = 0)
             samples[index] = rtt - dist;
             index = (index + 1) % window;
 
-            adjustment = sum(samples[]) / (2.0 * cast(double)window);
+            adjustment = sum(samples[]) / (2.0 * window);
         } else {
             coordinate.update(other.coordinate, rtt);
         }
