@@ -7,14 +7,7 @@ import vivaldi;
  */
 template matrix(size_t n) {
     auto matrix() {
-        double[n][n] matrix;
-
-        // XXX: Is there a better way to zero-fill a matrix?
-        // memset(3)?
-        foreach (ref row; matrix) {
-            row[] = 0.0;
-        }
-
+        double[n][n] matrix = 0.0;
         return matrix;
     }
 }
