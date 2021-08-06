@@ -1,6 +1,6 @@
 # vivaldi
 
-[![Build Status](https://travis-ci.com/bitbckt/vivaldi.svg?branch=master)](https://travis-ci.com/bitbckt/vivaldi)
+[![Build Status](https://github.com/bitbckt/vivaldi/workflows/CI/badge.svg)](https://github.com/bitbckt/vivaldi/actions)
 [![codecov](https://codecov.io/gh/bitbckt/vivaldi/branch/master/graph/badge.svg?token=W1CUSL1E3N)](https://codecov.io/gh/bitbckt/vivaldi)
 
 vivaldi is a D library based on "Vivaldi: A Decentralized Network
