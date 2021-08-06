@@ -17,7 +17,7 @@
             "preBuildCommands": ["$DUB run --compiler=$$DC unit-threaded -c gen_ut_main -- -f bin/ut.d -d $DUB"],
             "mainSourceFile": "bin/ut.d",
             "dependencies": {
-                "unit-threaded": "~>2.0",
+                "unit-threaded": "~>1.0",
                 "mir-random": "~>2.2"
             }
         }
