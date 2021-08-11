@@ -9,7 +9,7 @@ libvivaldi.dylib
 libvivaldi.dll
 libvivaldi.a
 libvivaldi.lib
-vivaldi*
+/vivaldi
 *.exe
 *.o
 *.obj
