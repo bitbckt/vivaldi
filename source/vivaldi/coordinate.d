@@ -49,6 +49,15 @@ struct Coordinate(size_t dims,
 {
 
     /**
+     * Copy constructor.
+     */
+    this(inout ref return scope Coordinate other) {
+        vector = other.vector;
+        error = other.error;
+        height = other.height;
+    }
+
+    /**
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      *
@@ -326,8 +335,8 @@ nothrow @safe @nogc unittest {
         alias isClose = approxEqual;
     }
 
-    auto origin = Coordinate!3();
-    auto c = origin;
+    const origin = Coordinate!3();
+    Coordinate!3 c = origin;
 
     auto above = Coordinate!3();
     above.vector = [ 0.0, 0.0, 2.9 ];

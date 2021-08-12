@@ -73,10 +73,10 @@ unittest {
     }
 
     simulate!(N, 3, n)(nodes, matrix, 1000);
-    double baseline = centerError();
+    const baseline = centerError();
 
-    simulate!(N, 3, n)(nodes, matrix, 10000);
+    simulate!(N, 3, n)(nodes, matrix, 10_000);
 
-    double err = centerError();
+    const err = centerError();
     assert(err <= 0.81 * baseline, format("err=%s baseline=%s", err, baseline));
 }

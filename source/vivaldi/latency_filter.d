@@ -1,8 +1,8 @@
 module vivaldi.latency_filter;
 
-import vivaldi.coordinate;
-
 import std.traits;
+
+import vivaldi.coordinate;
 
 /**
  * A helper for constructing and properly initializing a Buffer.
@@ -234,7 +234,7 @@ nothrow @safe @nogc unittest {
 @("single peak 4")
 unittest {
     double[] input = [10, 20, 30, 100, 30, 20, 10];
-    double[] output = [10, 20, 20, 30, 30, 30, 30];
+    const output = [10, 20, 20, 30, 30, 30, 30];
 
     assert(compute!4(input) == output);
 }
@@ -242,7 +242,7 @@ unittest {
 @("single peak 5")
 unittest {
     double[] input = [10, 20, 30, 100, 30, 20, 10];
-    double[] output = [10, 20, 20, 30, 30, 30, 30];
+    const output = [10, 20, 20, 30, 30, 30, 30];
 
     assert(compute!5(input) == output);
 }
@@ -250,7 +250,7 @@ unittest {
 @("single valley 4")
 unittest {
     double[] input = [90, 80, 70, 10, 70, 80, 90];
-    double[] output = [90, 90, 80, 80, 70, 70, 80];
+    const output = [90, 90, 80, 80, 70, 70, 80];
 
     assert(compute!4(input) == output);
 }
@@ -258,7 +258,7 @@ unittest {
 @("single valley 5")
 unittest {
     double[] input = [90, 80, 70, 10, 70, 80, 90];
-    double[] output = [90, 90, 80, 80, 70, 70, 70];
+    const output = [90, 90, 80, 80, 70, 70, 70];
 
     assert(compute!5(input) == output);
 }
@@ -266,7 +266,7 @@ unittest {
 @("single outlier 4")
 unittest {
     double[] input = [10, 10, 10, 100, 10, 10, 10];
-    double[] output = [10, 10, 10, 10, 10, 10, 10];
+    const output = [10, 10, 10, 10, 10, 10, 10];
 
     assert(compute!4(input) == output);
 }
@@ -274,7 +274,7 @@ unittest {
 @("single outlier 5")
 unittest {
     double[] input = [10, 10, 10, 100, 10, 10, 10];
-    double[] output = [10, 10, 10, 10, 10, 10, 10];
+    const output = [10, 10, 10, 10, 10, 10, 10];
 
     assert(compute!5(input) == output);
 }
@@ -282,7 +282,7 @@ unittest {
 @("triple outlier 4")
 unittest {
     double[] input = [10, 10, 100, 100, 100, 10, 10];
-    double[] output = [10, 10, 10, 100, 100, 100, 100];
+    const output = [10, 10, 10, 100, 100, 100, 100];
 
     assert(compute!4(input) == output);
 }
@@ -290,7 +290,7 @@ unittest {
 @("triple outlier 5")
 unittest {
     double[] input = [10, 10, 100, 100, 100, 10, 10];
-    double[] output = [10, 10, 10, 100, 100, 100, 100];
+    const output = [10, 10, 10, 100, 100, 100, 100];
 
     assert(compute!5(input) == output);
 }
@@ -298,7 +298,7 @@ unittest {
 @("quintuple outlier 4")
 unittest {
     double[] input = [10, 100, 100, 100, 100, 100, 10];
-    double[] output = [10, 100, 100, 100, 100, 100, 100];
+    const output = [10, 100, 100, 100, 100, 100, 100];
 
     assert(compute!4(input) == output);
 }
@@ -306,7 +306,7 @@ unittest {
 @("quintuple outlier 5")
 unittest {
     double[] input = [10, 100, 100, 100, 100, 100, 10];
-    double[] output = [10, 100, 100, 100, 100, 100, 100];
+    const output = [10, 100, 100, 100, 100, 100, 100];
 
     assert(compute!5(input) == output);
 }
@@ -314,7 +314,7 @@ unittest {
 @("alternating 4")
 unittest {
     double[] input = [10, 20, 10, 20, 10, 20, 10];
-    double[] output = [10, 20, 10, 20, 20, 20, 20];
+    const output = [10, 20, 10, 20, 20, 20, 20];
 
     assert(compute!4(input) == output);
 }
@@ -322,7 +322,7 @@ unittest {
 @("alternating 5")
 unittest {
     double[] input = [10, 20, 10, 20, 10, 20, 10];
-    double[] output = [10, 20, 10, 20, 10, 20, 10];
+    const output = [10, 20, 10, 20, 10, 20, 10];
 
     assert(compute!5(input) == output);
 }
@@ -330,7 +330,7 @@ unittest {
 @("ascending 4")
 unittest {
     double[] input = [10, 20, 30, 40, 50, 60, 70];
-    double[] output = [10, 20, 20, 30, 40, 50, 60];
+    const output = [10, 20, 20, 30, 40, 50, 60];
 
     assert(compute!4(input) == output);
 }
@@ -338,7 +338,7 @@ unittest {
 @("ascending 5")
 unittest {
     double[] input = [10, 20, 30, 40, 50, 60, 70];
-    double[] output = [10, 20, 20, 30, 30, 40, 50];
+    const output = [10, 20, 20, 30, 30, 40, 50];
 
     assert(compute!5(input) == output);
 }
@@ -346,7 +346,7 @@ unittest {
 @("descending 4")
 unittest {
     double[] input = [70, 60, 50, 40, 30, 20, 10];
-    double[] output = [70, 70, 60, 60, 50, 40, 30];
+    const output = [70, 70, 60, 60, 50, 40, 30];
 
     assert(compute!4(input) == output);
 }
@@ -354,7 +354,7 @@ unittest {
 @("descending 5")
 unittest {
     double[] input = [70, 60, 50, 40, 30, 20, 10];
-    double[] output = [70, 70, 60, 60, 50, 40, 30];
+    const output = [70, 70, 60, 60, 50, 40, 30];
 
     assert(compute!5(input) == output);
 }
@@ -452,11 +452,11 @@ unittest {
     struct B;
 
     class C {
-        override size_t toHash() nothrow {
+        override size_t toHash() nothrow const {
             return 42;
         }
 
-        override bool opEquals(Object o) {
+        override bool opEquals(Object o) const {
             return false;
         }
     }
