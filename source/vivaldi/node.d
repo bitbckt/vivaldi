@@ -24,11 +24,13 @@ import vivaldi.coordinate;
  */
 struct Node(T, ushort window = 0)
 {
+    nothrow @safe @nogc:
+
     /**
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      */
-    void update(const ref Node other, const double rtt) nothrow @safe @nogc {
+    void update(const ref Node other, const double rtt) {
         static if (window > 0) {
             import std.algorithm : sum;
 
@@ -50,7 +52,7 @@ struct Node(T, ushort window = 0)
     /**
      * Returns the distance to `other` in estimated round-trip time.
      */
-    double distanceTo(const ref Node other) nothrow @safe @nogc {
+    double distanceTo(const ref Node other) {
         auto dist = coordinate.distanceTo(other.coordinate);
 
         static if (window > 0) {
