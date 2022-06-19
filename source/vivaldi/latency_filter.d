@@ -28,6 +28,8 @@ private auto buffer(T, size_t window)()
 private struct Buffer(T, size_t window)
      if (isFloatingPoint!(T) && window > 0)
 {
+    nothrow @safe @nogc:
+
     struct Node {
         T value;
         size_t prev;
@@ -51,7 +53,7 @@ private struct Buffer(T, size_t window)
      * This method must be called prior to `push`, but may be called
      * again to reset the state of the buffer.
      */
-    void initialize() nothrow @safe @nogc {
+    void initialize() {
         foreach (i, ref node; buffer) {
             node.value = T.nan;
             node.prev = (i + window - 1) % window;
@@ -63,7 +65,7 @@ private struct Buffer(T, size_t window)
      * Returns the minimum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T min() const pure nothrow @safe @nogc {
+    T min() const pure {
         return buffer[head].value;
     }
 
@@ -71,7 +73,7 @@ private struct Buffer(T, size_t window)
      * Returns the maximum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T max() const pure nothrow @safe @nogc {
+    T max() const pure {
         import std.math : isNaN;
 
         size_t cur = buffer[head].next;
@@ -90,7 +92,7 @@ private struct Buffer(T, size_t window)
      *
      * Returns the median after the datum has been pushed.
      */
-    T push(const T datum) pure nothrow @safe @nogc {
+    T push(const T datum) pure {
         import std.math : isNaN;
 
         // If the current head will be overwritten, move it to the
@@ -172,7 +174,7 @@ private struct Buffer(T, size_t window)
         return buffer[median].value;
     }
 
-    void insert(const T datum, const size_t index) pure nothrow @safe @nogc {
+    void insert(const T datum, const size_t index) pure {
         const succ = index;
         const pred = buffer[index].prev;
 
