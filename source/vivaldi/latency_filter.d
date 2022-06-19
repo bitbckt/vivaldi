@@ -174,7 +174,7 @@ private struct Buffer(T, size_t window)
         return buffer[median].value;
     }
 
-    void insert(const T datum, const size_t index) pure {
+    private void insert(const T datum, const size_t index) pure {
         const succ = index;
         const pred = buffer[index].prev;
 
