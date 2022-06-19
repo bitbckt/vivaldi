@@ -48,6 +48,8 @@ struct Coordinate(size_t dims,
      if (dims > 0 && isValid01!ce && isValid01!cc && isFinite(rho) && rho > 0.0)
 {
 
+    nothrow @safe @nogc:
+
     /**
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
@@ -58,8 +60,7 @@ struct Coordinate(size_t dims,
     void update(const ref Coordinate other,
                 double rtt,
                 const double localAdjustment = 0.0,
-                const double remoteAdjustment = 0.0)
-         nothrow @safe @nogc {
+                const double remoteAdjustment = 0.0) {
 
         import std.algorithm : max, min;
         import std.math : abs, pow;
@@ -107,14 +108,14 @@ struct Coordinate(size_t dims,
      *
      * To include adjustments in a hybrid coordinate system, see Node.
      */
-    double distanceTo(const ref Coordinate other) const pure nothrow @safe @nogc {
+    double distanceTo(const ref Coordinate other) const pure {
         double[dims] diff = vector[] - other.vector[];
         return magnitude(diff) + height + other.height;
     }
 
     invariant {
         ///
-        static bool valid(const double d) pure nothrow @safe @nogc {
+        static bool valid(const double d) pure {
             import std.math : isInfinity, isNaN;
             return !isInfinity(d) && !isNaN(d);
         }
@@ -155,8 +156,7 @@ struct Coordinate(size_t dims,
      * away from other. If negative, this coordinate will be pulled
      * closer to other.
      */
-    private void applyForce(const ref Coordinate other, const double force)
-         nothrow @safe @nogc {
+    private void applyForce(const ref Coordinate other, const double force) {
         import std.algorithm : max;
 
         double[dims] unit;
