@@ -65,7 +65,7 @@ private struct Buffer(T, size_t window)
      * Returns the minimum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T min() const pure {
+    T min() const {
         return buffer[head].value;
     }
 
@@ -73,7 +73,7 @@ private struct Buffer(T, size_t window)
      * Returns the maximum datum within this buffer. If no data has
      * been pushed, returns NaN.
      */
-    T max() const pure {
+    T max() const {
         import std.math : isNaN;
 
         size_t cur = buffer[head].next;
@@ -92,7 +92,7 @@ private struct Buffer(T, size_t window)
      *
      * Returns the median after the datum has been pushed.
      */
-    T push(const T datum) pure {
+    T push(const T datum) {
         import std.math : isNaN;
 
         // If the current head will be overwritten, move it to the
@@ -174,7 +174,7 @@ private struct Buffer(T, size_t window)
         return buffer[median].value;
     }
 
-    private void insert(const T datum, const size_t index) pure {
+    private void insert(const T datum, const size_t index) {
         const succ = index;
         const pred = buffer[index].prev;
 
@@ -415,7 +415,7 @@ struct LatencyFilter(T, U, size_t window)
      * Returns the current median latency for a node. If no data has
      * been recorded for the node, returns NaN.
      */
-    U get(const T node) const pure nothrow @safe @nogc {
+    U get(const T node) const nothrow @safe @nogc {
         const(B*)* p = node in data;
 
         if (p is null) {
