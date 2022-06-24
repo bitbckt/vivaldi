@@ -58,23 +58,23 @@ struct Coordinate(size_t dims,
      * Node.
      */
     void update(const ref Coordinate other,
-                double rtt,
+                double rttSeconds,
                 const double localAdjustment = 0.0,
                 const double remoteAdjustment = 0.0) {
 
         import std.algorithm : max, min;
         import std.math : abs, pow;
 
-        assert(isFinite(rtt));
+        assert(isFinite(rttSeconds));
 
         double dist = distanceTo(other);
         dist = max(dist, dist + localAdjustment + remoteAdjustment);
 
         // Protect against div-by-zero.
-        rtt = max(rtt, double.min_normal);
+        rttSeconds = max(rttSeconds, double.min_normal);
 
         // This term is the relative error of this sample.
-        const err = abs(dist - rtt) / rtt;
+        const err = abs(dist - rttSeconds) / rttSeconds;
 
         // Weight is used to push in proportion to the error: large
         // error -> large force.
@@ -84,7 +84,7 @@ struct Coordinate(size_t dims,
 
         const delta = cc * weight;
 
-        double force = delta * (rtt - dist);
+        double force = delta * (rttSeconds - dist);
 
         // Apply the force exerted by the other node.
         applyForce(other, force);
@@ -108,7 +108,7 @@ struct Coordinate(size_t dims,
      *
      * To include adjustments in a hybrid coordinate system, see Node.
      */
-    double distanceTo(const ref Coordinate other) const pure {
+    double distanceTo(const ref Coordinate other) const {
         double[dims] diff = vector[] - other.vector[];
         return magnitude(diff) + height + other.height;
     }

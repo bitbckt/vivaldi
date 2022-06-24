@@ -30,22 +30,22 @@ struct Node(T, ushort window = 0)
      * Given a round-trip time observation for another node at
      * `other`, updates the estimated position of this Coordinate.
      */
-    void update(const ref Node other, const double rtt) {
+    void update(const ref Node other, const double rttSeconds) {
         static if (window > 0) {
             import std.algorithm : sum;
 
-            coordinate.update(other.coordinate, rtt, adjustment, other.adjustment);
+            coordinate.update(other.coordinate, rttSeconds, adjustment, other.adjustment);
             const dist = coordinate.distanceTo(other.coordinate);
 
             // NOTE: Rather than choosing landmarks as described in
             // "On Suitability", sample all nodes. In a passive
             // system, this is feasible.
-            samples[index] = rtt - dist;
+            samples[index] = rttSeconds - dist;
             index = (index + 1) % window;
 
             adjustment = sum(samples[]) / (2.0 * window);
         } else {
-            coordinate.update(other.coordinate, rtt);
+            coordinate.update(other.coordinate, rttSeconds);
         }
     }
 
